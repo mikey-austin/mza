@@ -1,1 +1,2 @@
 audio.interface.backend: AMIXER
+spring.datasource.url: file:/home/mikey/.mza/mza.db

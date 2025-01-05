@@ -2,6 +2,9 @@ package net.jackiemclean.mza;
 
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,14 +12,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/zones")
 public class ZoneController {
 
-  private final ZoneStateRepository zoneStateRepository;
-  private final SourceRepository sourceRepository;
+  private static final Logger LOG = LoggerFactory.getLogger(ZoneController.class);
 
-  @Autowired
-  ZoneController(ZoneStateRepository zoneStateRepository, SourceRepository sourceRepository) {
-    this.zoneStateRepository = zoneStateRepository;
-    this.sourceRepository = sourceRepository;
-  }
+  @Autowired private ZoneStateRepository zoneStateRepository;
+  @Autowired private SourceRepository sourceRepository;
+  @Autowired private ZoneRepository zoneRepository;
 
   @GetMapping
   public List<ZoneState> getAllZones() {
@@ -27,6 +27,7 @@ public class ZoneController {
   public ZoneState getZone(@PathVariable String name) {
     return zoneStateRepository
         .findById(name)
+        .or(() -> defaultState(name))
         .orElseThrow(() -> new RuntimeException("Zone not found"));
   }
 
@@ -35,6 +36,7 @@ public class ZoneController {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
+            .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(isMuted);
     return zoneStateRepository.save(zoneState);
@@ -45,6 +47,7 @@ public class ZoneController {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
+            .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(!zoneState.isMuted());
     return zoneStateRepository.save(zoneState);
@@ -55,6 +58,7 @@ public class ZoneController {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
+            .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setVolume(volumePercent);
     return zoneStateRepository.save(zoneState);
@@ -66,6 +70,7 @@ public class ZoneController {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
+            .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     Source source =
         sourceRepository
@@ -73,5 +78,19 @@ public class ZoneController {
             .orElseThrow(() -> new RuntimeException("Source not found"));
     zoneState.setSourceName(source.getName());
     return zoneStateRepository.save(zoneState);
+  }
+
+  private Optional<ZoneState> defaultState(String zoneName) {
+    return zoneRepository
+        .findByName(zoneName)
+        .map(
+            zone -> {
+              LOG.info("creating default zone: {}", zoneName);
+              var defaultState = new ZoneState();
+              defaultState.setVolume(0);
+              defaultState.setMuted(true);
+              defaultState.setName(zoneName);
+              return defaultState;
+            });
   }
 }
