@@ -49,6 +49,22 @@ public class ZoneState {
     return sourceName;
   }
 
+  @Override
+  public String toString() {
+    return "ZoneState{"
+        + "name='"
+        + name
+        + '\''
+        + ", sourceName='"
+        + sourceName
+        + '\''
+        + ", volume="
+        + volume
+        + ", isMuted="
+        + isMuted
+        + '}';
+  }
+
   public void setSourceName(String sourceName) {
     this.sourceName = sourceName;
   }

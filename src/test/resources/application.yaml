@@ -1,3 +1,4 @@
+audio.interface.backend: DUMMY
 zones:
   - name: zone1
     description: Living room speakers
