@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: mza
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: file:/tmp/mza.db
+    driver-class-name: org.sqlite.JDBC
+    initialization-mode: always
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+server:
+  port: 8080
+  error:
+    include-message: always
+logging:
+  level:
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG

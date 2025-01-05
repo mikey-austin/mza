@@ -1,5 +1,20 @@
 package net.jackiemclean.mza;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 
-public interface ZoneRepository extends JpaRepository<Zone, String> {}
+@Repository
+public class ZoneRepository {
+
+  private final ZoneConfig zoneConfig;
+
+  @Autowired
+  public ZoneRepository(ZoneConfig zoneConfig) {
+    this.zoneConfig = zoneConfig;
+  }
+
+  public Optional<Zone> findByName(String name) {
+    return zoneConfig.getZones().stream().filter(zone -> zone.getName().equals(name)).findFirst();
+  }
+}

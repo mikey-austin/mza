@@ -12,7 +12,7 @@
     <artifactId>mza</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>mza</name>
-    <description>Multi-zone audio control</description>
+    <description>Multi-zoneState audio control</description>
     <url/>
     <licenses>
         <license/>
@@ -60,12 +60,14 @@
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-community-dialects</artifactId>
-            <version>6.6.4.Final</version>
         </dependency>
         <dependency>
             <groupId>org.hibernate.orm</groupId>
             <artifactId>hibernate-core</artifactId>
-            <version>6.6.4.Final</version> <!-- Ensure this matches the dialect version -->
+        </dependency>
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
         </dependency>
     </dependencies>
 
