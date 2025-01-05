@@ -16,14 +16,12 @@ public class Source {
 
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "left_input_name")),
-    @AttributeOverride(name = "device", column = @Column(name = "left_input_device"))
   })
   @Embedded
   private Input leftInput;
 
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "right_input_name")),
-    @AttributeOverride(name = "device", column = @Column(name = "right_input_device"))
   })
   @Embedded
   private Input rightInput;

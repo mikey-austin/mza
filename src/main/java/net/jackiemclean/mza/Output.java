@@ -6,7 +6,6 @@ import jakarta.persistence.Embeddable;
 public class Output {
 
   private String name;
-  private String device;
 
   public Output() {}
 
@@ -16,13 +15,5 @@ public class Output {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getDevice() {
-    return device;
-  }
-
-  public void setDevice(String device) {
-    this.device = device;
   }
 }

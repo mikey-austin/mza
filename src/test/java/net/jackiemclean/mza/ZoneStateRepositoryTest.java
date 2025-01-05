@@ -24,7 +24,7 @@ class ZoneStateRepositoryTest {
     zoneStateRepository.deleteAll();
     ZoneState zs = new ZoneState();
     zs.setMuted(true);
-    zs.setSourceName("Spotify");
+    zs.setSourceName("pcm_source1");
     zs.setVolume(30);
     zs.setName("zone1");
     zoneStateRepository.save(zs);
@@ -34,17 +34,17 @@ class ZoneStateRepositoryTest {
   public void testSave() {
     var zoneState = zoneStateRepository.findById("zone1");
     assertTrue(zoneState.isPresent());
-    assertEquals("Spotify", zoneState.get().getSourceName());
+    assertEquals("pcm_source1", zoneState.get().getSourceName());
     assertEquals("zone1", zoneState.get().getName());
 
     zoneState.get().setVolume(0);
     zoneState.get().setMuted(false);
-    zoneState.get().setSourceName("Radio");
+    zoneState.get().setSourceName("pcm_source2");
     zoneStateRepository.save(zoneState.get());
 
     var updatedZoneState = zoneStateRepository.findById("zone1");
     assertTrue(updatedZoneState.isPresent());
-    assertEquals("Radio", updatedZoneState.get().getSourceName());
+    assertEquals("pcm_source2", updatedZoneState.get().getSourceName());
     assertEquals("zone1", updatedZoneState.get().getName());
   }
 }

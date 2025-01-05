@@ -11,14 +11,12 @@ public class Zone {
 
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "left_output_name")),
-    @AttributeOverride(name = "device", column = @Column(name = "left_output_device"))
   })
   @Embedded
   private Output leftOutput;
 
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "right_output_name")),
-    @AttributeOverride(name = "device", column = @Column(name = "right_output_device"))
   })
   @Embedded
   private Output rightOutput;

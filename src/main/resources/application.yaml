@@ -18,5 +18,102 @@ server:
     include-message: always
 logging:
   level:
+    net.jackiemclean: DEBUG
     org.springframework: INFO
     org.hibernate.SQL: DEBUG
+
+# Use a dummy backend so our tests work without actually
+# trying to configure a card.
+audio.interface.backend: DUMMY
+
+# The real zone and source configurations.
+zones:
+  - name: zone1
+    description: Living room speakers
+    leftOutput:
+      name: "Mix A"
+    rightOutput:
+      name: "Mix B"
+  - name: zone2
+    description: Kitchen speakers
+    leftOutput:
+      name: "Mix C"
+    rightOutput:
+      name: "Mix D"
+  - name: zone3
+    description: Ground floor toilet speaker
+    leftOutput:
+      name: "Mix E"
+    rightOutput:
+      name: "Mix E"
+  - name: zone4
+    description: Main bathroom speaker
+    leftOutput:
+      name: "Mix F"
+    rightOutput:
+      name: "Mix F"
+  - name: zone5
+    description: First floor toilet speaker
+    leftOutput:
+      name: "Mix G"
+    rightOutput:
+      name: "Mix G"
+  - name: zone6
+    description: Laundry room speaker
+    leftOutput:
+      name: "Mix H"
+    rightOutput:
+      name: "Mix H"
+
+sources:
+  # PCM sources are software mixer inputs that applications
+  # such as MPD, etc. use to output their sound.
+  - name: "pcm_source1"
+    leftInput:
+      name: "Input 01"
+    rightInput:
+      name: "Input 02"
+  - name: "pcm_source2"
+    leftInput:
+      name: "Input 03"
+    rightInput:
+      name: "Input 04"
+  - name: "pcm_source3"
+    leftInput:
+      name: "Input 05"
+    rightInput:
+      name: "Input 06"
+  - name: "pcm_source4"
+    leftInput:
+      name: "Input 07"
+    rightInput:
+      name: "Input 08"
+  - name: "pcm_source5"
+    leftInput:
+      name: "Input 09"
+    rightInput:
+      name: "Input 10"
+  - name: "pcm_source6"
+    leftInput:
+      name: "Input 11"
+    rightInput:
+      name: "Input 12"
+
+  # Hardware input sources. This allows us to directly route
+  # physical audio sources connected to the inputs to one or
+  # more zones.
+  - name: "hw_source1"
+    leftInput:
+      name: "Input 13"
+    rightInput:
+      name: "Input 14"
+  - name: "hw_source2"
+    leftInput:
+      name: "Input 15"
+    rightInput:
+      name: "Input 16"
+  - name: "hw_source3"
+    leftInput:
+      name: "Input 17"
+    rightInput:
+      name: "Input 18"

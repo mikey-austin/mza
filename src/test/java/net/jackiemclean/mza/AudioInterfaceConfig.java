@@ -16,14 +16,15 @@ public class AudioInterfaceConfig {
   public AudioInterface dummyInterface() {
     return new AudioInterface() {
       @Override
-      public void link(Source source, Zone zone) {
-        LOG.info("Linking {} -> {}", source, zone);
-      }
-
-      @Override
-      public void sync(Zone zone, ZoneState zoneState) {
+      public void sync(Zone zone, Source source, ZoneState zoneState) {
         LOG.info("Syncing {} with state {}", zone, zone);
       }
     };
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "AMIXER")
+  public AudioInterface amixer() {
+    return new AmixerAudioInterface();
   }
 }

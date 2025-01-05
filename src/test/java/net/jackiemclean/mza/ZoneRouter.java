@@ -31,10 +31,7 @@ public class ZoneRouter {
         continue;
       }
 
-      audioInterface.link(source.get(), zone.get());
-      LOG.debug("Linked {} -> {}", zoneState.getSourceName(), zoneState.getName());
-
-      audioInterface.sync(zone.get(), zoneState);
+      audioInterface.sync(zone.get(), source.get(), zoneState);
       LOG.debug("Synced {} with state {}", zone.get().getName(), zoneState);
     }
   }
