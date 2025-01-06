@@ -1,6 +1,7 @@
 package net.jackiemclean.mza;
 
 import javax.sql.DataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -17,10 +18,10 @@ public class MzaApplication {
   }
 
   @Bean
-  public DataSource dataSource() {
+  public DataSource dataSource(@Value("${spring.datasource.url}") String url) {
     DriverManagerDataSource dataSource = new DriverManagerDataSource();
     dataSource.setDriverClassName("org.sqlite.JDBC");
-    dataSource.setUrl("jdbc:sqlite:${spring.datasource.url}");
+    dataSource.setUrl(url);
     return dataSource;
   }
 }

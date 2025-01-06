@@ -1,4 +1,4 @@
-spring.datasource.url: file:/home/mikey/.mza/mza.db
+spring.datasource.url: jdbc:sqlite:/home/mikey/.mza/mza.db
 audio.interface:
   backend: AMIXER
   amixer:

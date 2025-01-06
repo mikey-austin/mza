@@ -5,7 +5,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: file:/tmp/mza.db
+    url: jdbc:sqlite:/tmp/mza.db
     driver-class-name: org.sqlite.JDBC
     initialization-mode: always
   jpa:
