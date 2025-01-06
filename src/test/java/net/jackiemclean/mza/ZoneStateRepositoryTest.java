@@ -9,7 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(
     properties = {
-      "spring.datasource.url=file:/tmp/test_mza.db",
+      "spring.datasource.url=jdbc:sqlite:/tmp/test_mza.db",
       "spring.datasource.initialization-mode=always",
       "spring.jpa.hibernate.ddl-auto=update"
     })
