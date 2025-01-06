@@ -1,5 +1,6 @@
 package net.jackiemclean.mza;
 
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -16,5 +17,9 @@ public class ZoneRepository {
 
   public Optional<Zone> findByName(String name) {
     return zoneConfig.getZones().stream().filter(zone -> zone.getName().equals(name)).findFirst();
+  }
+
+  public Collection<Zone> findAll() {
+    return zoneConfig.getZones();
   }
 }

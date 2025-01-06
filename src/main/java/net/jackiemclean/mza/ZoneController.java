@@ -17,6 +17,7 @@ public class ZoneController {
   @Autowired private ZoneStateRepository zoneStateRepository;
   @Autowired private SourceRepository sourceRepository;
   @Autowired private ZoneRepository zoneRepository;
+  @Autowired private ZoneRouter zoneRouter;
 
   @GetMapping
   public List<ZoneState> getAllZones() {
@@ -39,6 +40,7 @@ public class ZoneController {
             .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(isMuted);
+    zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
@@ -50,6 +52,7 @@ public class ZoneController {
             .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(!zoneState.isMuted());
+    zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
@@ -61,11 +64,12 @@ public class ZoneController {
             .or(() -> defaultState(name))
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setVolume(volumePercent);
+    zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
   @PutMapping("/{name}/source")
-  public ZoneState changeVolume(
+  public ZoneState changeSource(
       @PathVariable String name, @RequestParam @NotBlank String sourceName) {
     ZoneState zoneState =
         zoneStateRepository
@@ -76,7 +80,22 @@ public class ZoneController {
         sourceRepository
             .findByName(sourceName)
             .orElseThrow(() -> new RuntimeException("Source not found"));
+
+    if (zoneState.getSourceName() != null && zoneState.getSourceName().equals(sourceName)) {
+      LOG.warn("nothing to do, cannot configure with the same source");
+      return zoneState;
+    }
+
+    // When changing source, we need to mute the existing connections.
+    if (!zoneState.isMuted()) {
+      LOG.info("Before source change, mute existing route");
+      zoneState.setMuted(true);
+      zoneRouter.syncZone(zoneState);
+      zoneState.setMuted(false);
+    }
+
     zoneState.setSourceName(source.getName());
+    zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 

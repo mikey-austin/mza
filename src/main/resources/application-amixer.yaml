@@ -1,2 +1,6 @@
-audio.interface.backend: AMIXER
 spring.datasource.url: file:/home/mikey/.mza/mza.db
+audio.interface:
+  backend: AMIXER
+  amixer:
+    command: /usr/bin/amixer
+    device: USB
