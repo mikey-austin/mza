@@ -1,7 +1,7 @@
 package net.jackiemclean.mza;
 
 import jakarta.validation.constraints.NotBlank;
-import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +20,13 @@ public class ZoneController {
   @Autowired private ZoneRouter zoneRouter;
 
   @GetMapping
-  public List<ZoneState> getAllZones() {
+  public Collection<ZoneState> getAllZones() {
     return zoneStateRepository.findAll();
+  }
+
+  @GetMapping("/available")
+  public Collection<Zone> getAvailableZones() {
+    return zoneRepository.findAll();
   }
 
   @GetMapping("/{name}")
@@ -29,52 +34,57 @@ public class ZoneController {
     return zoneStateRepository
         .findById(name)
         .or(() -> defaultState(name))
+        .map(this::enrichState)
         .orElseThrow(() -> new RuntimeException("Zone not found"));
   }
 
-  @PutMapping("/{name}/mute")
+  @PatchMapping("/{name}/mute")
   public ZoneState muteZone(@PathVariable String name, @RequestParam boolean isMuted) {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
             .or(() -> defaultState(name))
+            .map(this::enrichState)
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(isMuted);
     zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
-  @PutMapping("/{name}/toggleMute")
+  @PatchMapping("/{name}/toggleMute")
   public ZoneState toggleMuteZone(@PathVariable String name) {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
             .or(() -> defaultState(name))
+            .map(this::enrichState)
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setMuted(!zoneState.isMuted());
     zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
-  @PutMapping("/{name}/volume")
+  @PatchMapping("/{name}/volume")
   public ZoneState changeVolume(@PathVariable String name, @RequestParam int volumePercent) {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
             .or(() -> defaultState(name))
+            .map(this::enrichState)
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setVolume(volumePercent);
     zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }
 
-  @PutMapping("/{name}/source")
+  @PatchMapping("/{name}/source")
   public ZoneState changeSource(
       @PathVariable String name, @RequestParam @NotBlank String sourceName) {
     ZoneState zoneState =
         zoneStateRepository
             .findById(name)
             .or(() -> defaultState(name))
+            .map(this::enrichState)
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     Source source =
         sourceRepository
@@ -97,6 +107,12 @@ public class ZoneController {
     zoneState.setSourceName(source.getName());
     zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
+  }
+
+  private ZoneState enrichState(ZoneState zoneState) {
+    zoneRepository.findByName(zoneState.getName()).ifPresent(zoneState::setZoneDetails);
+    sourceRepository.findByName(zoneState.getSourceName()).ifPresent(zoneState::setSourceDetails);
+    return zoneState;
   }
 
   private Optional<ZoneState> defaultState(String zoneName) {

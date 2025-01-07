@@ -1,5 +1,6 @@
 package net.jackiemclean.mza;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,6 +19,14 @@ public class ZoneState {
   private int volume;
 
   private boolean isMuted;
+
+  @Transient
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Zone zoneDetails;
+
+  @Transient
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private Source sourceDetails;
 
   public ZoneState() {}
 
@@ -67,5 +76,21 @@ public class ZoneState {
 
   public void setSourceName(String sourceName) {
     this.sourceName = sourceName;
+  }
+
+  public Zone getZoneDetails() {
+    return zoneDetails;
+  }
+
+  public void setZoneDetails(Zone zoneDetails) {
+    this.zoneDetails = zoneDetails;
+  }
+
+  public Source getSourceDetails() {
+    return sourceDetails;
+  }
+
+  public void setSourceDetails(Source sourceDetails) {
+    this.sourceDetails = sourceDetails;
   }
 }

@@ -21,6 +21,8 @@ public class Zone {
   @Embedded
   private Output rightOutput;
 
+  private String description;
+
   public Zone() {}
 
   public String getName() {
@@ -45,5 +47,13 @@ public class Zone {
 
   public void setRightOutput(Output rightOutput) {
     this.rightOutput = rightOutput;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
   }
 }
