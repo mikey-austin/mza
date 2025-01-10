@@ -13,8 +13,8 @@ class ZoneRepositoryTest {
 
   @Test
   public void testOkFetch() {
-    var zone = zoneRepository.findByName("zone1");
+    var zone = zoneRepository.findByName("kitchen");
     assertTrue(zone.isPresent());
-    assertEquals("zone1", zone.get().getName());
+    assertEquals("kitchen", zone.get().getName());
   }
 }

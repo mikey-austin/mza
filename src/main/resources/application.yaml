@@ -26,39 +26,44 @@ logging:
 # trying to configure a card.
 audio.interface.backend: DUMMY
 
+# MQTT configuration
+mqtt.broker.url: tcp://mccoy.lan:1883
+mqtt.clientId: mza
+mqtt.topic.base: mza/zone/
+
 # The real zone and source configurations.
 zones:
-  - name: zone1
+  - name: living_room
     description: Living room speakers
     leftOutput:
       name: "Mix A"
     rightOutput:
       name: "Mix B"
-  - name: zone2
+  - name: kitchen
     description: Kitchen speakers
     leftOutput:
       name: "Mix C"
     rightOutput:
       name: "Mix D"
-  - name: zone3
+  - name: ground_floor_toilet
     description: Ground floor toilet speaker
     leftOutput:
       name: "Mix E"
     rightOutput:
       name: "Mix E"
-  - name: zone4
+  - name: main_bathroom
     description: Main bathroom speaker
     leftOutput:
       name: "Mix F"
     rightOutput:
       name: "Mix F"
-  - name: zone5
+  - name: first_floor_toilet
     description: First floor toilet speaker
     leftOutput:
       name: "Mix G"
     rightOutput:
       name: "Mix G"
-  - name: zone6
+  - name: laundry_room
     description: Laundry room speaker
     leftOutput:
       name: "Mix H"
@@ -68,36 +73,31 @@ zones:
 sources:
   # PCM sources are software mixer inputs that applications
   # such as MPD, etc. use to output their sound.
-  - name: "pcm_source1"
+  - name: "mpd"
     leftInput:
       name: "Input 01"
     rightInput:
       name: "Input 02"
-  - name: "pcm_source2"
+  - name: "upnp1"
     leftInput:
       name: "Input 03"
     rightInput:
       name: "Input 04"
-  - name: "pcm_source3"
+  - name: "upnp2"
     leftInput:
       name: "Input 05"
     rightInput:
       name: "Input 06"
-  - name: "pcm_source4"
+  - name: "upnp3"
     leftInput:
       name: "Input 07"
     rightInput:
       name: "Input 08"
-  - name: "pcm_source5"
+  - name: "upnp4"
     leftInput:
       name: "Input 09"
     rightInput:
       name: "Input 10"
-  - name: "pcm_source6"
-    leftInput:
-      name: "Input 11"
-    rightInput:
-      name: "Input 12"
 
   # Hardware input sources. This allows us to directly route
   # physical audio sources connected to the inputs to one or

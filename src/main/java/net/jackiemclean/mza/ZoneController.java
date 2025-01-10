@@ -1,5 +1,7 @@
 package net.jackiemclean.mza;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Collection;
 import java.util.Optional;
@@ -73,6 +75,26 @@ public class ZoneController {
             .map(this::enrichState)
             .orElseThrow(() -> new RuntimeException("Zone not found"));
     zoneState.setVolume(volumePercent);
+    zoneRouter.syncZone(zoneState);
+    return zoneStateRepository.save(zoneState);
+  }
+
+  @PatchMapping("/{name}/incrementVolume")
+  public ZoneState incrementVolume(
+      @PathVariable String name, @Min(-20) @Max(20) @RequestParam int increment) {
+    ZoneState zoneState =
+        zoneStateRepository
+            .findById(name)
+            .or(() -> defaultState(name))
+            .map(this::enrichState)
+            .orElseThrow(() -> new RuntimeException("Zone not found"));
+    var nextVolume = zoneState.getVolume() + increment;
+    if (nextVolume < 0) {
+      nextVolume = 0;
+    } else if (nextVolume > 100) {
+      nextVolume = 100;
+    }
+    zoneState.setVolume(nextVolume);
     zoneRouter.syncZone(zoneState);
     return zoneStateRepository.save(zoneState);
   }

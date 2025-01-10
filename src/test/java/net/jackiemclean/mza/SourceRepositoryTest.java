@@ -14,8 +14,8 @@ public class SourceRepositoryTest {
 
   @Test
   public void testOkFetch() {
-    var s = sourceRepository.findByName("pcm_source1");
+    var s = sourceRepository.findByName("mpd");
     assertTrue(s.isPresent());
-    assertEquals("pcm_source1", s.get().getName());
+    assertEquals("mpd", s.get().getName());
   }
 }

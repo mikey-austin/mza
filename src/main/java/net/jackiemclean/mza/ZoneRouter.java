@@ -1,8 +1,11 @@
 package net.jackiemclean.mza;
 
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -16,6 +19,10 @@ public class ZoneRouter {
   @Autowired ZoneRepository zoneRepository;
   @Autowired SourceRepository sourceRepository;
   @Autowired AudioInterface audioInterface;
+  @Autowired MqttClient mqttClient;
+
+  @Value("${mqtt.topic.base}")
+  String topicBase;
 
   public void syncZone(ZoneState zoneState) {
     var zone = zoneRepository.findByName(zoneState.getName());
@@ -32,6 +39,31 @@ public class ZoneRouter {
 
     audioInterface.sync(zone.get(), source.get(), zoneState);
     LOG.debug("Synced {} with state {}", zone.get().getName(), zoneState);
+
+    LOG.debug("Push zone update via MQTT");
+    publishZoneToMqtt(zoneState);
+  }
+
+  private void publishZoneToMqtt(ZoneState zoneState) {
+    try {
+      String topic = topicBase + zoneState.getName();
+
+      // Publish each value to its respective subtopic
+      mqttClient.publish(
+          topic + "/sourceName", new MqttMessage(zoneState.getSourceName().getBytes()));
+      mqttClient.publish(
+          topic + "/volume", new MqttMessage(String.valueOf(zoneState.getVolume()).getBytes()));
+      mqttClient.publish(
+          topic + "/muted", new MqttMessage(String.valueOf(zoneState.isMuted()).getBytes()));
+
+      if (zoneState.getZoneDetails() != null) {
+        mqttClient.publish(
+            topic + "/description",
+            new MqttMessage(zoneState.getZoneDetails().getDescription().getBytes()));
+      }
+    } catch (Exception e) {
+      LOG.error("Failed to publish zone to MQTT", e);
+    }
   }
 
   @EventListener(ApplicationReadyEvent.class)
