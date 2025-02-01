@@ -1,6 +1,7 @@
 package net.jackiemclean.mza;
 
 import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,24 @@ public class ZoneRouter {
   }
 
   private void publishZoneToMqtt(ZoneState zoneState) {
+    for (var i = 1; i < 5; i++) {
+      if (!mqttClient.isConnected()) {
+        LOG.error("MQTT not connected, attempting to reconnect (retry #{})", i);
+        try {
+          mqttClient.reconnect();
+          break;
+        } catch (MqttException e) {
+          LOG.error("Failed to reconnect... waiting a bit", e);
+          try {
+            Thread.sleep(5_000);
+          } catch (InterruptedException ie) {
+            LOG.error("Interrupted my sleep", e);
+            break;
+          }
+        }
+      }
+    }
+
     try {
       String topic = topicBase + zoneState.getName();
 

@@ -31,6 +31,20 @@ mqtt.broker.url: tcp://mccoy.lan:1883
 mqtt.clientId: mza
 mqtt.topic.base: mza/zone/
 
+groups:
+  - name: living_area
+    zones:
+      - living_room
+      - kitchen
+  - name: all
+    zones:
+      - living_room
+      - kitchen
+      - ground_floor_toilet
+      - first_floor_toilet
+      - main_bathroom
+      - laundry_room
+
 # The real zone and source configurations.
 zones:
   - name: living_room
