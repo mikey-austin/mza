@@ -81,6 +81,30 @@ docker run -d \
 - Requires: `/dev/snd` device access and audio group membership
 - **Network**: `--add-host` allows access to services running on the host machine
 
+### Run with PIPEWIRE Backend (for development)
+
+To control audio on the host system running Pipewire:
+
+```bash
+docker run -d \
+  --name mza \
+  -p 8080:8080 \
+  --add-host=host.docker.internal:host-gateway \
+  -v /tmp/mza:/var/lib/mza \
+  -v /run/user/1000/pipewire-0:/tmp/pipewire-0 \
+  -e SPRING_PROFILES_ACTIVE=dummy \
+  -e AUDIO_INTERFACE_BACKEND=PIPEWIRE \
+  -e AUDIO_INTERFACE_PIPEWIRE_RUNTIME_DIR=/tmp \
+  -e MQTT_BROKER_URL=tcp://host.docker.internal:2883 \
+  mza:latest
+```
+
+**Configuration (pipewire backend):**
+- **Volume Mount**: Mounts the host's Pipewire socket (usually in `/run/user/<uid>/`) to a location in the container (e.g., `/tmp`).
+- **Runtime Dir**: Sets `AUDIO_INTERFACE_PIPEWIRE_RUNTIME_DIR` to the directory containing the mounted socket (e.g., `/tmp`).
+- **Backend**: Overrides the default backend of the profile with `AUDIO_INTERFACE_BACKEND=PIPEWIRE`.
+
+
 ### Environment Variables
 
 | Variable | Description | Default |
