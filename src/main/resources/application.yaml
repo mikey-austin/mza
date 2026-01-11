@@ -5,7 +5,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:sqlite:/tmp/mza.db
+    url: jdbc:sqlite:/var/lib/mza/mza.db
     driver-class-name: org.sqlite.JDBC
     initialization-mode: always
   jpa:
@@ -22,28 +22,17 @@ logging:
     org.springframework: INFO
     org.hibernate.SQL: DEBUG
 
-# Use a dummy backend so our tests work without actually
-# trying to configure a card.
-audio.interface.backend: DUMMY
+audio.interface:
+  backend: AMIXER
+  amixer:
+    command: /usr/bin/amixer
+    device: USB
 
 # MQTT configuration
 mqtt.broker.url: tcp://mccoy.lan:1883
 mqtt.clientId: mza
 mqtt.topic.base: mza/zone/
-
-groups:
-  - name: living_area
-    zones:
-      - living_room
-      - kitchen
-  - name: all
-    zones:
-      - living_room
-      - kitchen
-      - ground_floor_toilet
-      - first_floor_toilet
-      - main_bathroom
-      - laundry_room
+mqtt.topic.base.group: mza/group/
 
 # The real zone and source configurations.
 zones:

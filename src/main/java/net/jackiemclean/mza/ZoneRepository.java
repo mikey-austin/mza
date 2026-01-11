@@ -22,4 +22,8 @@ public class ZoneRepository {
   public Collection<Zone> findAll() {
     return zoneConfig.getZones();
   }
+
+  public boolean existsByName(String name) {
+    return findByName(name).isPresent();
+  }
 }

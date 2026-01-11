@@ -4,7 +4,6 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,23 +16,63 @@ public class GroupController {
 
   private static final Logger LOG = LoggerFactory.getLogger(GroupController.class);
 
-  @Autowired private GroupConfig groupConfig;
-  @Autowired private ZoneController zoneController;
+  @Autowired
+  private GroupService groupService;
+  @Autowired
+  private GroupStateRepository groupStateRepository;
+  @Autowired
+  private ZoneController zoneController;
 
   @GetMapping
-  public Collection<Group> getAllGroups() {
-    return groupConfig.getGroups();
+  public Collection<GroupState> getAllGroups() {
+    return groupStateRepository.findAll();
   }
 
   @GetMapping("/{name}")
-  public Optional<Group> getGroup(@PathVariable @NotBlank String name) {
-    return groupConfig.getGroups().stream().filter(g -> name.equals(g.getName())).findFirst();
+  public GroupState getGroup(@PathVariable @NotBlank String name) {
+    return groupStateRepository
+        .findByName(name)
+        .orElseThrow(() -> new RuntimeException("Group not found"));
   }
 
+  @PostMapping
+  public GroupState createGroup(@RequestBody CreateGroupRequest request) {
+    return groupService.createGroup(
+        request.getName(),
+        request.getDisplayName(),
+        request.getZones(),
+        request.getDescription());
+  }
+
+  @PutMapping("/{name}")
+  public GroupState updateGroup(
+      @PathVariable @NotBlank String name, @RequestBody UpdateGroupRequest request) {
+    return groupService.updateGroup(
+        name, request.getDisplayName(), request.getZones(), request.getDescription());
+  }
+
+  @DeleteMapping("/{name}")
+  public void deleteGroup(@PathVariable @NotBlank String name) {
+    groupService.deleteGroup(name);
+  }
+
+  @PostMapping("/{name}/zones/{zoneName}")
+  public GroupState addZoneToGroup(
+      @PathVariable @NotBlank String name, @PathVariable @NotBlank String zoneName) {
+    return groupService.addZoneToGroup(name, zoneName);
+  }
+
+  @DeleteMapping("/{name}/zones/{zoneName}")
+  public GroupState removeZoneFromGroup(
+      @PathVariable @NotBlank String name, @PathVariable @NotBlank String zoneName) {
+    return groupService.removeZoneFromGroup(name, zoneName);
+  }
+
+  // Control endpoints - keep existing functionality
   @PatchMapping("/{name}/mute")
   public Collection<ZoneState> muteGroup(
       @PathVariable @NotBlank String name, @RequestParam boolean isMuted) {
-    var group = getGroup(name).orElseThrow(() -> new RuntimeException("no group found"));
+    GroupState group = getGroup(name);
     return group.getZones().stream()
         .map(z -> zoneController.muteZone(z, isMuted))
         .collect(Collectors.toList());
@@ -41,7 +80,7 @@ public class GroupController {
 
   @PatchMapping("/{name}/toggleMute")
   public Collection<ZoneState> toggleMuteGroup(@PathVariable @NotBlank String name) {
-    var group = getGroup(name).orElseThrow(() -> new RuntimeException("no group found"));
+    GroupState group = getGroup(name);
     return group.getZones().stream()
         .map(z -> zoneController.toggleMuteZone(z))
         .collect(Collectors.toList());
@@ -50,7 +89,7 @@ public class GroupController {
   @PatchMapping("/{name}/volume")
   public Collection<ZoneState> changeGroupVolume(
       @PathVariable @NotBlank String name, @RequestParam int volumePercent) {
-    var group = getGroup(name).orElseThrow(() -> new RuntimeException("no group found"));
+    GroupState group = getGroup(name);
     return group.getZones().stream()
         .map(z -> zoneController.changeVolume(z, volumePercent))
         .collect(Collectors.toList());
@@ -58,8 +97,9 @@ public class GroupController {
 
   @PatchMapping("/{name}/incrementVolume")
   public Collection<ZoneState> incrementGroupVolume(
-      @PathVariable String name, @Min(-20) @Max(20) @RequestParam int increment) {
-    var group = getGroup(name).orElseThrow(() -> new RuntimeException("no group found"));
+      @PathVariable @NotBlank String name, @Min(-20) @Max(20) @RequestParam int increment) {
+    // Snapcast-style: preserve relative volume differences
+    GroupState group = getGroup(name);
     return group.getZones().stream()
         .map(z -> zoneController.incrementVolume(z, increment))
         .collect(Collectors.toList());
@@ -67,8 +107,8 @@ public class GroupController {
 
   @PatchMapping("/{name}/source")
   public Collection<ZoneState> setGroupSource(
-      @PathVariable String name, @RequestParam @NotBlank String sourceName) {
-    var group = getGroup(name).orElseThrow(() -> new RuntimeException("no group found"));
+      @PathVariable @NotBlank String name, @RequestParam @NotBlank String sourceName) {
+    GroupState group = getGroup(name);
     return group.getZones().stream()
         .map(z -> zoneController.changeSource(z, sourceName))
         .collect(Collectors.toList());

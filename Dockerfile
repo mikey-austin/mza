@@ -1,4 +1,4 @@
-FROM eclipse-temurin:23-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 RUN apk add alsa-utils
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
@@ -11,7 +11,7 @@ ARG AUDIO_GID=29
 # Update the audio group GID if it exists, or create it if not
 RUN apk add --no-cache shadow && \
     if getent group audio; then \
-        delgroup audio; \
+    delgroup audio; \
     fi && \
     addgroup -g $AUDIO_GID audio
 

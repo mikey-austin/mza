@@ -16,11 +16,16 @@ public class ZoneRouter {
 
   private static final Logger LOG = LoggerFactory.getLogger(ZoneRouter.class);
 
-  @Autowired ZoneStateRepository zoneStateRepository;
-  @Autowired ZoneRepository zoneRepository;
-  @Autowired SourceRepository sourceRepository;
-  @Autowired AudioInterface audioInterface;
-  @Autowired MqttClient mqttClient;
+  @Autowired
+  ZoneStateRepository zoneStateRepository;
+  @Autowired
+  ZoneRepository zoneRepository;
+  @Autowired
+  SourceRepository sourceRepository;
+  @Autowired
+  AudioInterface audioInterface;
+  @Autowired
+  MqttClient mqttClient;
 
   @Value("${mqtt.topic.base}")
   String topicBase;
@@ -67,18 +72,23 @@ public class ZoneRouter {
     try {
       String topic = topicBase + zoneState.getName();
 
-      // Publish each value to its respective subtopic
-      mqttClient.publish(
-          topic + "/sourceName", new MqttMessage(zoneState.getSourceName().getBytes()));
-      mqttClient.publish(
-          topic + "/volume", new MqttMessage(String.valueOf(zoneState.getVolume()).getBytes()));
-      mqttClient.publish(
-          topic + "/muted", new MqttMessage(String.valueOf(zoneState.isMuted()).getBytes()));
+      // Publish each value to its respective subtopic with retained flag
+      MqttMessage sourceNameMsg = new MqttMessage(zoneState.getSourceName().getBytes());
+      sourceNameMsg.setRetained(true);
+      mqttClient.publish(topic + "/sourceName", sourceNameMsg);
+
+      MqttMessage volumeMsg = new MqttMessage(String.valueOf(zoneState.getVolume()).getBytes());
+      volumeMsg.setRetained(true);
+      mqttClient.publish(topic + "/volume", volumeMsg);
+
+      MqttMessage mutedMsg = new MqttMessage(String.valueOf(zoneState.isMuted()).getBytes());
+      mutedMsg.setRetained(true);
+      mqttClient.publish(topic + "/muted", mutedMsg);
 
       if (zoneState.getZoneDetails() != null) {
-        mqttClient.publish(
-            topic + "/description",
-            new MqttMessage(zoneState.getZoneDetails().getDescription().getBytes()));
+        MqttMessage descriptionMsg = new MqttMessage(zoneState.getZoneDetails().getDescription().getBytes());
+        descriptionMsg.setRetained(true);
+        mqttClient.publish(topic + "/description", descriptionMsg);
       }
     } catch (Exception e) {
       LOG.error("Failed to publish zone to MQTT", e);
