@@ -29,6 +29,8 @@ audio.interface:
     device: USB
 
 # MQTT configuration
+# Set mqtt.enabled to false to disable MQTT entirely (useful when using JSON-RPC WebSocket only)
+mqtt.enabled: true
 mqtt.broker.url: tcp://mccoy.lan:1883
 mqtt.clientId: mza
 mqtt.topic.base: mza/zone/

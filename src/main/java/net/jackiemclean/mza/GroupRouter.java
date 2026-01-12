@@ -9,20 +9,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class GroupRouter {
 
     private static final Logger LOG = LoggerFactory.getLogger(GroupRouter.class);
 
-    @Autowired
-    private MqttClient mqttClient;
+    @Autowired(required = false)
+    private Optional<MqttClient> mqttClient;
 
-    @Value("${mqtt.topic.base.group}")
+    @Value("${mqtt.topic.base.group:mza/group/}")
     String topicBase;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public void publishGroupToMqtt(GroupState groupState) {
+        if (mqttClient == null || mqttClient.isEmpty()) {
+            return;
+        }
+
+        MqttClient client = mqttClient.get();
         try {
             String topic = topicBase + groupState.getName();
 
@@ -30,30 +37,30 @@ public class GroupRouter {
             String zonesJson = objectMapper.writeValueAsString(groupState.getZones());
             MqttMessage zonesMsg = new MqttMessage(zonesJson.getBytes());
             zonesMsg.setRetained(true);
-            mqttClient.publish(topic + "/zones", zonesMsg);
+            client.publish(topic + "/zones", zonesMsg);
 
             // Publish display name
             if (groupState.getDisplayName() != null) {
                 MqttMessage displayNameMsg = new MqttMessage(groupState.getDisplayName().getBytes());
                 displayNameMsg.setRetained(true);
-                mqttClient.publish(topic + "/displayName", displayNameMsg);
+                client.publish(topic + "/displayName", displayNameMsg);
             }
 
             // Publish description
             if (groupState.getDescription() != null) {
                 MqttMessage descMsg = new MqttMessage(groupState.getDescription().getBytes());
                 descMsg.setRetained(true);
-                mqttClient.publish(topic + "/description", descMsg);
+                client.publish(topic + "/description", descMsg);
             }
 
             // Publish timestamps
             MqttMessage createdMsg = new MqttMessage(groupState.getCreatedAt().toString().getBytes());
             createdMsg.setRetained(true);
-            mqttClient.publish(topic + "/created_at", createdMsg);
+            client.publish(topic + "/created_at", createdMsg);
 
             MqttMessage updatedMsg = new MqttMessage(groupState.getUpdatedAt().toString().getBytes());
             updatedMsg.setRetained(true);
-            mqttClient.publish(topic + "/updated_at", updatedMsg);
+            client.publish(topic + "/updated_at", updatedMsg);
 
             LOG.debug("Published group {} to MQTT", groupState.getName());
         } catch (Exception e) {
@@ -62,6 +69,11 @@ public class GroupRouter {
     }
 
     public void publishGroupDeletion(String groupName) {
+        if (mqttClient == null || mqttClient.isEmpty()) {
+            return;
+        }
+
+        MqttClient client = mqttClient.get();
         try {
             String topic = topicBase + groupName;
 
@@ -69,11 +81,11 @@ public class GroupRouter {
             MqttMessage emptyMsg = new MqttMessage(new byte[0]);
             emptyMsg.setRetained(true);
 
-            mqttClient.publish(topic + "/zones", emptyMsg);
-            mqttClient.publish(topic + "/displayName", emptyMsg);
-            mqttClient.publish(topic + "/description", emptyMsg);
-            mqttClient.publish(topic + "/created_at", emptyMsg);
-            mqttClient.publish(topic + "/updated_at", emptyMsg);
+            client.publish(topic + "/zones", emptyMsg);
+            client.publish(topic + "/displayName", emptyMsg);
+            client.publish(topic + "/description", emptyMsg);
+            client.publish(topic + "/created_at", emptyMsg);
+            client.publish(topic + "/updated_at", emptyMsg);
 
             LOG.debug("Published group deletion for {} to MQTT", groupName);
         } catch (Exception e) {

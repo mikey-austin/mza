@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.Optional;
 import java.util.Set;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,14 +27,15 @@ class GroupRouterTest {
     @Spy
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    @InjectMocks
     private GroupRouter groupRouter;
 
     private GroupState testGroup;
 
     @BeforeEach
     void setUp() {
+        groupRouter = new GroupRouter();
         ReflectionTestUtils.setField(groupRouter, "topicBase", "mza/group/");
+        ReflectionTestUtils.setField(groupRouter, "mqttClient", Optional.of(mqttClient));
 
         testGroup = new GroupState();
         testGroup.setName("test_group");

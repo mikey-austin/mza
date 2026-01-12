@@ -1,0 +1,6 @@
+spring.datasource.url: jdbc:sqlite:/tmp/mza/mza.db
+audio.interface:
+  backend: DUMMY
+mqtt.enabled: false
+snapcast.tcp.enabled: true
+snapcast.tcp.port: 1706

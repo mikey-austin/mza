@@ -11,6 +11,8 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class ZoneRouter {
 
@@ -24,10 +26,10 @@ public class ZoneRouter {
   SourceRepository sourceRepository;
   @Autowired
   AudioInterface audioInterface;
-  @Autowired
-  MqttClient mqttClient;
+  @Autowired(required = false)
+  Optional<MqttClient> mqttClient;
 
-  @Value("${mqtt.topic.base}")
+  @Value("${mqtt.topic.base:mza/zone/}")
   String topicBase;
 
   public void syncZone(ZoneState zoneState) {
@@ -46,16 +48,23 @@ public class ZoneRouter {
     audioInterface.sync(zone.get(), source.get(), zoneState);
     LOG.debug("Synced {} with state {}", zone.get().getName(), zoneState);
 
-    LOG.debug("Push zone update via MQTT");
-    publishZoneToMqtt(zoneState);
+    if (mqttClient != null && mqttClient.isPresent()) {
+      LOG.debug("Push zone update via MQTT");
+      publishZoneToMqtt(zoneState);
+    }
   }
 
   private void publishZoneToMqtt(ZoneState zoneState) {
+    if (mqttClient == null || mqttClient.isEmpty()) {
+      return;
+    }
+
+    MqttClient client = mqttClient.get();
     for (var i = 1; i < 5; i++) {
-      if (!mqttClient.isConnected()) {
+      if (!client.isConnected()) {
         LOG.error("MQTT not connected, attempting to reconnect (retry #{})", i);
         try {
-          mqttClient.reconnect();
+          client.reconnect();
           break;
         } catch (MqttException e) {
           LOG.error("Failed to reconnect... waiting a bit", e);
@@ -75,20 +84,20 @@ public class ZoneRouter {
       // Publish each value to its respective subtopic with retained flag
       MqttMessage sourceNameMsg = new MqttMessage(zoneState.getSourceName().getBytes());
       sourceNameMsg.setRetained(true);
-      mqttClient.publish(topic + "/sourceName", sourceNameMsg);
+      client.publish(topic + "/sourceName", sourceNameMsg);
 
       MqttMessage volumeMsg = new MqttMessage(String.valueOf(zoneState.getVolume()).getBytes());
       volumeMsg.setRetained(true);
-      mqttClient.publish(topic + "/volume", volumeMsg);
+      client.publish(topic + "/volume", volumeMsg);
 
       MqttMessage mutedMsg = new MqttMessage(String.valueOf(zoneState.isMuted()).getBytes());
       mutedMsg.setRetained(true);
-      mqttClient.publish(topic + "/muted", mutedMsg);
+      client.publish(topic + "/muted", mutedMsg);
 
       if (zoneState.getZoneDetails() != null) {
         MqttMessage descriptionMsg = new MqttMessage(zoneState.getZoneDetails().getDescription().getBytes());
         descriptionMsg.setRetained(true);
-        mqttClient.publish(topic + "/description", descriptionMsg);
+        client.publish(topic + "/description", descriptionMsg);
       }
     } catch (Exception e) {
       LOG.error("Failed to publish zone to MQTT", e);

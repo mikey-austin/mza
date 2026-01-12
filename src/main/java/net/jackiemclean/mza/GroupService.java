@@ -179,6 +179,12 @@ public class GroupService {
     }
 
     private void createSingleMemberGroup(String zoneName) {
+        // Check if a group with this name already exists
+        if (groupStateRepository.findByName(zoneName).isPresent()) {
+            LOG.debug("Group {} already exists, skipping single-member group creation", zoneName);
+            return;
+        }
+
         // Create a group named after the zone
         GroupState singleGroup = new GroupState();
         singleGroup.setName(zoneName);

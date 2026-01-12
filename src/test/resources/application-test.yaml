@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: "jdbc:sqlite:/tmp/mza-test.db"
+    driver-class-name: org.sqlite.JDBC
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: create-drop
+
+audio.interface:
+  backend: DUMMY
+
+mqtt.enabled: false
+
+# Disable TCP server for tests (avoid port conflicts)
+snapcast.tcp.enabled: false
+
+# Test zones and sources
+zones:
+  - name: test_zone
+    description: Test Zone
+    left:
+      device: dummy
+      channel: 1
+    right:
+      device: dummy
+      channel: 2
+
+sources:
+  - name: test_source
+    left:
+      device: dummy
+      channel: 1
+    right:
+      device: dummy
+      channel: 2
