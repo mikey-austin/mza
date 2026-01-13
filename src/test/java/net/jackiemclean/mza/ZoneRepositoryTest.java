@@ -5,16 +5,19 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class ZoneRepositoryTest {
 
-  @Autowired ZoneRepository zoneRepository;
+  @Autowired
+  ZoneRepository zoneRepository;
 
   @Test
   public void testOkFetch() {
-    var zone = zoneRepository.findByName("kitchen");
+    var zone = zoneRepository.findByName("test_zone");
     assertTrue(zone.isPresent());
-    assertEquals("kitchen", zone.get().getName());
+    assertEquals("test_zone", zone.get().getName());
   }
 }

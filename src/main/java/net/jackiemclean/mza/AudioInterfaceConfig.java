@@ -12,21 +12,38 @@ public class AudioInterfaceConfig {
 
   private static final Logger LOG = LoggerFactory.getLogger(AudioInterfaceConfig.class);
 
+  @Value("${audio.interface.debounce.enabled:true}")
+  private boolean debounceEnabled;
+
+  @Value("${audio.interface.debounce.quantumMs:500}")
+  private long debounceQuantumMs;
+
+  private AudioInterface wrapWithDebounce(AudioInterface raw) {
+    if (debounceEnabled) {
+      LOG.info("Wrapping audio interface with debouncing (quantum={}ms)", debounceQuantumMs);
+      return new DebouncingAudioInterface(raw, debounceQuantumMs);
+    }
+    return raw;
+  }
+
   @Bean
   @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "DUMMY")
   public AudioInterface dummyInterface() {
-    return new AudioInterface() {
+    AudioInterface raw = new AudioInterface() {
       @Override
       public void sync(Zone zone, Source source, ZoneState zoneState) {
-        LOG.info("Syncing {} with state {}", zone, zone);
+        LOG.info("Syncing {} with state {}", zone, zoneState);
       }
     };
+    return wrapWithDebounce(raw);
   }
 
   @Bean
   @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "AMIXER")
-  public AudioInterface amixer() {
-    return new AmixerAudioInterface();
+  public AudioInterface amixer(
+      @Value("${audio.interface.amixer.device:0}") String device,
+      @Value("${audio.interface.amixer.commandPath:/usr/bin/amixer}") String amixerCommand) {
+    return wrapWithDebounce(new AmixerAudioInterface(device, amixerCommand));
   }
 
   @Bean
@@ -34,7 +51,7 @@ public class AudioInterfaceConfig {
   public AudioInterface pipewire(
       @Value("${audio.interface.pipewire.runtime-dir:#{null}}") String pipewireRuntimeDir,
       CommandExecutor commandExecutor) {
-    return new PipewireAudioInterface(pipewireRuntimeDir, commandExecutor);
+    return wrapWithDebounce(new PipewireAudioInterface(pipewireRuntimeDir, commandExecutor));
   }
 
   @Bean

@@ -4,17 +4,18 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 public class AmixerAudioInterface implements AudioInterface {
 
   private static final Logger LOG = LoggerFactory.getLogger(AmixerAudioInterface.class);
 
-  @Value("${audio.interface.amixer.device:0}")
-  private String device;
+  private final String device;
+  private final String amixerCommand;
 
-  @Value("${audio.interface.amixer.commandPath:/usr/bin/amixer}")
-  private String amixerCommand;
+  public AmixerAudioInterface(String device, String amixerCommand) {
+    this.device = device;
+    this.amixerCommand = amixerCommand;
+  }
 
   private void executeAmixerCommand(String command) {
     LOG.debug("Running -> {}", command);
@@ -41,17 +42,14 @@ public class AmixerAudioInterface implements AudioInterface {
 
     var leftOutput = zone.getLeftOutput().getName();
     var leftInput = source.getLeftInput().getName();
-    String leftCmd =
-        String.format(
-            "%s -c'%s' set '%s %s' %d%%", amixerCommand, device, leftOutput, leftInput, zoneVolume);
-    executeAmixerCommand(leftCmd);
-
-    var rightInput = source.getRightInput().getName();
     var rightOutput = zone.getRightOutput().getName();
-    String rightCmd =
-        String.format(
-            "%s -c'%s' set '%s %s' %d%%",
-            amixerCommand, device, rightOutput, rightInput, zoneVolume);
-    executeAmixerCommand(rightCmd);
+    var rightInput = source.getRightInput().getName();
+
+    // Combine both channel commands into a single shell invocation
+    String combinedCmd = String.format(
+        "%s -c'%s' set '%s %s' %d%%; %s -c'%s' set '%s %s' %d%%",
+        amixerCommand, device, leftOutput, leftInput, zoneVolume,
+        amixerCommand, device, rightOutput, rightInput, zoneVolume);
+    executeAmixerCommand(combinedCmd);
   }
 }

@@ -3,4 +3,4 @@ audio.interface:
   backend: DUMMY
 mqtt.enabled: false
 snapcast.tcp.enabled: true
-snapcast.tcp.port: 1706
+snapcast.tcp.port: 1705
