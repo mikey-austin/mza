@@ -1,0 +1,104 @@
+spring:
+  application:
+    name: mza
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: jdbc:sqlite:/var/lib/mza/mza.db
+    driver-class-name: org.sqlite.JDBC
+    initialization-mode: always
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+server:
+  port: 8080
+  error:
+    include-message: always
+logging:
+  level:
+    net.jackiemclean: DEBUG
+    org.springframework: INFO
+    org.hibernate.SQL: DEBUG
+
+audio.interface:
+  backend: PIPEWIRE
+  pipewire:
+    runtime-dir: /tmp
+    pw-dump-command: /usr/bin/pw-dump
+    pw-link-command: /usr/bin/pw-link
+    pw-cli-command: /usr/bin/pw-cli
+    source-link-prefix: ""
+    zone-link-prefix: input.
+    zone-props-prefix: output.
+
+# MQTT configuration
+# Set mqtt.enabled to false to disable MQTT entirely (useful when using JSON-RPC WebSocket only)
+mqtt.enabled: false
+
+# The real zone and source configurations.
+zones:
+  - name: zone1_living_room
+    description: Living room speakers
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+  - name: zone2_kitchen
+    description: Kitchen speakers
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+  - name: zone3_ground_floor_toilet
+    description: Ground floor toilet speaker
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+  - name: zone4_main_bathroom
+    description: Main bathroom speaker
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+  - name: zone5_first_floor_toilet
+    description: First floor toilet speaker
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+  - name: zone6_laundry_room
+    description: Laundry room speaker
+    leftOutput:
+      name: "playback_FL"
+    rightOutput:
+      name: "playback_FR"
+
+sources:
+  - name: "mpd"
+    leftInput:
+      name: "monitor_FL"
+    rightInput:
+      name: "monitor_FR"
+  - name: "gstreamer1"
+    leftInput:
+      name: "monitor_FL"
+    rightInput:
+      name: "monitor_FR"
+  - name: "gstreamer2"
+    leftInput:
+      name: "monitor_FL"
+    rightInput:
+      name: "monitor_FR"
+  - name: "upnp1"
+    leftInput:
+      name: "monitor_FL"
+    rightInput:
+      name: "monitor_FR"
+  - name: "upnp2"
+    leftInput:
+      name: "monitor_FL"
+    rightInput:
+      name: "monitor_FR"

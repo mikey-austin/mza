@@ -50,8 +50,22 @@ public class AudioInterfaceConfig {
   @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "PIPEWIRE")
   public AudioInterface pipewire(
       @Value("${audio.interface.pipewire.runtime-dir:#{null}}") String pipewireRuntimeDir,
+      @Value("${audio.interface.pipewire.pw-dump-command:/usr/bin/pw-dump}") String pwDumpCommand,
+      @Value("${audio.interface.pipewire.pw-link-command:/usr/bin/pw-link}") String pwLinkCommand,
+      @Value("${audio.interface.pipewire.pw-cli-command:/usr/bin/pw-cli}") String pwCliCommand,
+      @Value("${audio.interface.pipewire.source-link-prefix:}") String sourceLinkPrefix,
+      @Value("${audio.interface.pipewire.zone-link-prefix:input.}") String zoneLinkPrefix,
+      @Value("${audio.interface.pipewire.zone-props-prefix:output.}") String zonePropsPrefix,
       CommandExecutor commandExecutor) {
-    return wrapWithDebounce(new PipewireAudioInterface(pipewireRuntimeDir, commandExecutor));
+    return wrapWithDebounce(new PipewireAudioInterface(
+        pipewireRuntimeDir,
+        pwDumpCommand,
+        pwLinkCommand,
+        pwCliCommand,
+        sourceLinkPrefix,
+        zoneLinkPrefix,
+        zonePropsPrefix,
+        commandExecutor));
   }
 
   @Bean

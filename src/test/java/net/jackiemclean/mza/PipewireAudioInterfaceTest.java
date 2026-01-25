@@ -2,13 +2,11 @@ package net.jackiemclean.mza;
 
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import java.util.Collections;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,94 +19,57 @@ class PipewireAudioInterfaceTest {
     private Source source;
     private ZoneState zoneState;
 
-    @BeforeEach
-    void setUp() {
-        commandExecutor = mock(CommandExecutor.class);
-        audioInterface = new PipewireAudioInterface("/run/user/1000", commandExecutor);
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
-        // Setup mocks
+    @BeforeEach
+    void setUp() throws Exception {
+        commandExecutor = mock(CommandExecutor.class);
+        audioInterface = new PipewireAudioInterface(
+                "/run/user/1000",
+                "pw-dump",
+                "pw-link",
+                "pw-cli",
+                "",        // source link prefix
+                "input.",  // zone link prefix
+                "output.", // zone props prefix
+                commandExecutor);
+
         zone = new Zone();
-        zone.setName("LivingRoom");
+        zone.setName("zone6_laundry_room");
         Output lOut = new Output();
-        lOut.setName("LivingRoom_L");
+        lOut.setName("playback_FL");
         Output rOut = new Output();
-        rOut.setName("LivingRoom_R");
+        rOut.setName("playback_FR");
         zone.setLeftOutput(lOut);
         zone.setRightOutput(rOut);
 
         source = new Source();
-        source.setName("TV");
+        source.setName("upnp2");
         Input lIn = new Input();
-        lIn.setName("TV_L");
+        lIn.setName("monitor_FL");
         Input rIn = new Input();
-        rIn.setName("TV_R");
+        rIn.setName("monitor_FR");
         source.setLeftInput(lIn);
         source.setRightInput(rIn);
 
         zoneState = new ZoneState();
         zoneState.setVolume(50);
         zoneState.setMuted(false);
+
+        String dump = Files.readString(Path.of("pw-dump.txt"));
+        when(commandExecutor.executeAndGetOutput(eq("pw-dump"), anyMap())).thenReturn(List.of(dump.split("\\R")));
     }
 
     @Test
-    void testSync_CreatesMissingLoopbacks() {
-        // Mock that nodes do not exist
-        when(commandExecutor.executeAndGetOutput(contains("pw-link -i"), anyMap()))
-                .thenReturn(Collections.emptyList());
-
+    void syncUnlinksExistingLinksForZone() throws Exception {
         audioInterface.sync(zone, source, zoneState);
 
-        verify(commandExecutor, atLeastOnce()).execute(contains("pw-loopback"), anyMap());
-        // Should create for both if different
-        verify(commandExecutor).execute(contains("pw-loopback --name 'LivingRoom_L'"), anyMap());
-        verify(commandExecutor).execute(contains("pw-loopback --name 'LivingRoom_R'"), anyMap());
-    }
+        // New links created
+        verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FL' 'input.zone6_laundry_room:playback_FL'"), anyMap());
+        verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FR' 'input.zone6_laundry_room:playback_FR'"), anyMap());
 
-    @Test
-    void testSync_SetsVolume() {
-        // Mock nodes exist
-        when(commandExecutor.executeAndGetOutput(contains("pw-link -i"), anyMap()))
-                .thenReturn(List.of("LivingRoom_L:input_FL", "LivingRoom_R:input_FR"));
-
-        audioInterface.sync(zone, source, zoneState);
-
-        verify(commandExecutor).execute(contains("pw-cli set-param 'LivingRoom_L' Props"), anyMap());
-        verify(commandExecutor, atLeastOnce()).execute(contains("0.500000"), anyMap());
-    }
-
-    @Test
-    void testSync_LinksStereo() {
-        // Mock successful linking
-        when(commandExecutor.executeAndGetOutput(contains("pw-link -i"), anyMap()))
-                .thenReturn(List.of("LivingRoom_L:input_FL", "LivingRoom_R:input_FR"));
-
-        audioInterface.sync(zone, source, zoneState);
-
-        // Check Source L -> Zone L
-        verify(commandExecutor, atLeastOnce()).execute(contains("pw-link 'TV_L:capture_FL' 'LivingRoom_L:playback_FL'"),
-                anyMap());
-        // Actually we try multiple suffixes. We can't easily verify WHICH one was
-        // called unless we mock throwing exceptions for the others.
-        // But we can verify that *some* link command was called with the node names.
-        verify(commandExecutor, atLeastOnce()).execute(contains("pw-link 'TV_L:"), anyMap());
-    }
-
-    @Test
-    void testSync_MonoZone() {
-        // Setup Mono Zone (L output name == R output name)
-        zone.getRightOutput().setName("LivingRoom_L");
-
-        when(commandExecutor.executeAndGetOutput(contains("pw-link -i"), anyMap()))
-                .thenReturn(List.of("LivingRoom_L:input_MONO"));
-
-        audioInterface.sync(zone, source, zoneState);
-
-        // Source L -> Zone
-        // Source R -> Zone
-        verify(commandExecutor, never()).execute(contains("pw-loopback"), anyMap()); // exists
-
-        // Verify linking
-        // Should attempt to link TV_R to LivingRoom_L
-        verify(commandExecutor, atLeastOnce()).execute(contains("pw-link 'TV_R:"), anyMap());
+        // Existing links removed afterwards by id
+        verify(commandExecutor).execute(contains("pw-link -d 196"), anyMap());
+        verify(commandExecutor).execute(contains("pw-link -d 197"), anyMap());
     }
 }

@@ -1,5 +1,5 @@
 FROM eclipse-temurin:25-jre-alpine
-RUN apk add alsa-utils
+RUN apk add alsa-utils jq pipewire-tools
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 EXPOSE 8080/tcp

@@ -90,12 +90,11 @@ docker run -d \
   --name mza \
   -p 8080:8080 \
   --add-host=host.docker.internal:host-gateway \
-  -v /tmp/mza:/var/lib/mza \
+  -v $HOME/.mza:/var/lib/mza \
   -v /run/user/1000/pipewire-0:/tmp/pipewire-0 \
-  -e SPRING_PROFILES_ACTIVE=dummy \
+  -e SPRING_PROFILES_ACTIVE=pipewire \
+  -e PIPEWIRE_RUNTIME_DIR=/tmp \
   -e AUDIO_INTERFACE_BACKEND=PIPEWIRE \
-  -e AUDIO_INTERFACE_PIPEWIRE_RUNTIME_DIR=/tmp \
-  -e MQTT_BROKER_URL=tcp://host.docker.internal:2883 \
   mza:latest
 ```
 
