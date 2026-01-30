@@ -68,8 +68,8 @@ class PipewireAudioInterfaceTest {
         verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FL' 'input.zone6_laundry_room:playback_FL'"), anyMap());
         verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FR' 'input.zone6_laundry_room:playback_FR'"), anyMap());
 
-        // Existing links removed afterwards by id
-        verify(commandExecutor).execute(contains("pw-link -d 196"), anyMap());
-        verify(commandExecutor).execute(contains("pw-link -d 197"), anyMap());
+        // Existing links from mpd (node 39) to zone6 (node 67) removed by id
+        verify(commandExecutor).execute(contains("pw-link -d 237"), anyMap());
+        verify(commandExecutor).execute(contains("pw-link -d 211"), anyMap());
     }
 }
