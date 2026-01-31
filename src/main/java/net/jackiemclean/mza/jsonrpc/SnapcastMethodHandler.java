@@ -365,12 +365,12 @@ public class SnapcastMethodHandler {
         // First try by ID, then by name
         Optional<GroupState> byId = groupStateRepository.findById(groupId);
         if (byId.isPresent()) {
-            return byId.get();
+            return repairEmptyZonesIfNeeded(byId.get(), groupId);
         }
 
         Optional<GroupState> byName = groupStateRepository.findByName(groupId);
         if (byName.isPresent()) {
-            return byName.get();
+            return repairEmptyZonesIfNeeded(byName.get(), groupId);
         }
 
         // Check if this is an implicit group (zone name as group ID)
@@ -388,6 +388,26 @@ public class SnapcastMethodHandler {
         }
 
         throw new JsonRpcException(JsonRpcError.INVALID_PARAMS, "Group not found");
+    }
+
+    private GroupState repairEmptyZonesIfNeeded(GroupState groupState, String groupId) {
+        if (groupState.getZones() != null && !groupState.getZones().isEmpty()) {
+            return groupState;
+        }
+
+        // GroupState exists but has no zones - check if groupId is a valid zone
+        Optional<Zone> zone = zoneRepository.findByName(groupId);
+        if (zone.isPresent()) {
+            LOG.warn("Self-repairing GroupState '{}' with empty zones - adding zone '{}'",
+                    groupState.getName(), groupId);
+            groupState.setZones(Set.of(groupId));
+            return groupStateRepository.save(groupState);
+        }
+
+        // No matching zone found, return as-is (will result in no-op for operations)
+        LOG.warn("GroupState '{}' has empty zones and no matching zone found for '{}'",
+                groupState.getName(), groupId);
+        return groupState;
     }
 
     private SnapGroup buildSnapGroup(GroupState groupState) {
