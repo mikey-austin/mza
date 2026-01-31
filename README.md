@@ -133,6 +133,42 @@ The `left` and `right` properties define the audio channel mapping. For mono zon
 
 For backwards compatibility, `leftOutput`/`rightOutput` (zones) and `leftInput`/`rightInput` (sources) are also accepted.
 
+#### PipeWire Node:Port Format
+
+When using the PipeWire backend, channel names support an extended `node:port` format that allows specifying a different PipeWire node for each channel. This is useful for hardware sources where the node name differs from the logical source name.
+
+**Simple format** (node derived from source/zone name):
+```yaml
+sources:
+  - name: "mpd"
+    left:
+      name: "monitor_FL"      # Uses node "mpd" with port "monitor_FL"
+    right:
+      name: "monitor_FR"      # Uses node "mpd" with port "monitor_FR"
+```
+
+**Extended node:port format** (explicit node name):
+```yaml
+sources:
+  - name: "hw_source1"
+    left:
+      name: "alsa_input.usb-Focusrite_Scarlett_18i20:capture_AUX0"
+    right:
+      name: "alsa_input.usb-Focusrite_Scarlett_18i20:capture_AUX1"
+```
+
+In the extended format, the part before the colon is the PipeWire node name, and the part after is the port name. This allows hardware inputs to have user-friendly source names (e.g., "hw_source1") while routing audio from specific PipeWire nodes.
+
+The same format works for zones:
+```yaml
+zones:
+  - name: "kitchen"
+    left:
+      name: "alsa_output.usb-audio-device:playback_FL"
+    right:
+      name: "alsa_output.usb-audio-device:playback_FR"
+```
+
 ### Environment Variables
 
 | Variable | Description | Default |

@@ -1,5 +1,6 @@
 package net.jackiemclean.mza;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
@@ -9,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 class PipewireAudioInterfaceTest {
@@ -71,5 +73,61 @@ class PipewireAudioInterfaceTest {
         // Existing links from mpd (node 39) to zone6 (node 67) removed by id
         verify(commandExecutor).execute(contains("pw-link -d 237"), anyMap());
         verify(commandExecutor).execute(contains("pw-link -d 211"), anyMap());
+    }
+
+    @Nested
+    class ParseNodePortTest {
+
+        @Test
+        void parsesSimplePortName() {
+            var result = audioInterface.parseNodePort("monitor_FL", "defaultNode");
+
+            assertEquals("defaultNode", result.nodeName());
+            assertEquals("monitor_FL", result.portName());
+        }
+
+        @Test
+        void parsesNodeColonPortFormat() {
+            var result = audioInterface.parseNodePort("alsa_input.usb-device:capture_AUX0", "defaultNode");
+
+            assertEquals("alsa_input.usb-device", result.nodeName());
+            assertEquals("capture_AUX0", result.portName());
+        }
+
+        @Test
+        void parsesLongNodeNameWithColon() {
+            var result = audioInterface.parseNodePort(
+                    "alsa_input.usb-Focusrite_Scarlett_18i20_USB_03000295-00.multichannel-input:capture_AUX0",
+                    "defaultNode");
+
+            assertEquals("alsa_input.usb-Focusrite_Scarlett_18i20_USB_03000295-00.multichannel-input", result.nodeName());
+            assertEquals("capture_AUX0", result.portName());
+        }
+
+        @Test
+        void handlesNullInput() {
+            var result = audioInterface.parseNodePort(null, "defaultNode");
+
+            assertEquals("defaultNode", result.nodeName());
+            assertNull(result.portName());
+        }
+
+        @Test
+        void handlesColonAtStart() {
+            // Colon at position 0 means no node name before it, use default
+            var result = audioInterface.parseNodePort(":portOnly", "defaultNode");
+
+            assertEquals("defaultNode", result.nodeName());
+            assertEquals(":portOnly", result.portName());
+        }
+
+        @Test
+        void handlesMultipleColons() {
+            // Only first colon is used as separator
+            var result = audioInterface.parseNodePort("node:port:extra", "defaultNode");
+
+            assertEquals("node", result.nodeName());
+            assertEquals("port:extra", result.portName());
+        }
     }
 }

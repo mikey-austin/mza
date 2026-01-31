@@ -66,12 +66,8 @@ public class PipewireAudioInterface implements AudioInterface {
 		// Parse dump once and extract all data in a single pass
 		GraphState graph = loadAndParseGraph();
 
-		// Resolve nodes with configured prefixes
+		// Resolve zone properties node for volume/mute control
 		String zonePropsNodeName = withPrefix(zone.getName(), zonePropsPrefix);
-		String zoneLinkNodeName = withPrefix(zone.getName(), zoneLinkPrefix);
-		String sourceLinkNodeName = withPrefix(source.getName(), sourceLinkPrefix);
-
-		// Apply mute/volume on the zone node
 		Integer zonePropsNodeId = graph.nodeIds.get(zonePropsNodeName);
 		if (zonePropsNodeId == null) {
 			LOG.error("Zone properties node '{}' not found in PipeWire graph, skipping volume/mute", zonePropsNodeName);
@@ -79,23 +75,61 @@ public class PipewireAudioInterface implements AudioInterface {
 			applyMuteAndVolume(zonePropsNodeId, zoneState);
 		}
 
-		// Resolve link node IDs with graceful handling
-		Integer zoneLinkNodeId = graph.nodeIds.get(zoneLinkNodeName);
-		Integer sourceLinkNodeId = graph.nodeIds.get(sourceLinkNodeName);
+		// Parse source and zone channels - each can specify its own node via "node:port" format
+		NodePort leftSource = parseNodePort(source.getLeftInput().getName(), source.getName());
+		NodePort rightSource = parseNodePort(source.getRightInput().getName(), source.getName());
+		NodePort leftZone = parseNodePort(zone.getLeftOutput().getName(), zone.getName());
+		NodePort rightZone = parseNodePort(zone.getRightOutput().getName(), zone.getName());
 
-		if (zoneLinkNodeId == null) {
-			LOG.error("Zone link node '{}' not found in PipeWire graph, skipping link reconciliation", zoneLinkNodeName);
+		// Reconcile left channel
+		reconcileChannelWithNodePort(graph, leftSource, sourceLinkPrefix, leftZone, zoneLinkPrefix, zone.getName());
+
+		// Reconcile right channel
+		reconcileChannelWithNodePort(graph, rightSource, sourceLinkPrefix, rightZone, zoneLinkPrefix, zone.getName());
+	}
+
+	/**
+	 * Reconciles a channel link between source and zone, resolving node IDs from parsed NodePort specs.
+	 */
+	private void reconcileChannelWithNodePort(GraphState graph,
+			NodePort source, String sourcePrefix,
+			NodePort zone, String zonePrefix,
+			String zoneName) {
+		String sourceNodeName = withPrefix(source.nodeName(), sourcePrefix);
+		String zoneNodeName = withPrefix(zone.nodeName(), zonePrefix);
+
+		Integer sourceNodeId = graph.nodeIds.get(sourceNodeName);
+		Integer zoneNodeId = graph.nodeIds.get(zoneNodeName);
+
+		if (sourceNodeId == null) {
+			LOG.error("Source node '{}' not found in PipeWire graph, skipping channel", sourceNodeName);
 			return;
 		}
-		if (sourceLinkNodeId == null) {
-			LOG.error("Source link node '{}' not found in PipeWire graph, skipping link reconciliation", sourceLinkNodeName);
+		if (zoneNodeId == null) {
+			LOG.error("Zone node '{}' not found in PipeWire graph, skipping channel", zoneNodeName);
 			return;
 		}
 
-		reconcileChannel(graph, sourceLinkNodeId, source.getLeftInput().getName(),
-				zoneLinkNodeId, zone.getLeftOutput().getName(), zone.getName());
-		reconcileChannel(graph, sourceLinkNodeId, source.getRightInput().getName(),
-				zoneLinkNodeId, zone.getRightOutput().getName(), zone.getName());
+		reconcileChannel(graph, sourceNodeId, source.portName(), zoneNodeId, zone.portName(), zoneName);
+	}
+
+	/**
+	 * Parses a node:port specification. If the input contains a colon,
+	 * the part before is the node name and after is the port name.
+	 * Otherwise, uses the default name as the node.
+	 */
+	NodePort parseNodePort(String spec, String defaultNodeName) {
+		if (spec == null) {
+			return new NodePort(defaultNodeName, null);
+		}
+		int colonIdx = spec.indexOf(':');
+		if (colonIdx > 0) {
+			return new NodePort(spec.substring(0, colonIdx), spec.substring(colonIdx + 1));
+		}
+		return new NodePort(defaultNodeName, spec);
+	}
+
+	record NodePort(String nodeName, String portName) {
 	}
 
 	private String withPrefix(String rawName, String prefix) {
