@@ -95,8 +95,9 @@ public class PipewireAudioInterface implements AudioInterface {
 			NodePort source, String sourcePrefix,
 			NodePort zone, String zonePrefix,
 			String zoneName) {
-		String sourceNodeName = withPrefix(source.nodeName(), sourcePrefix);
-		String zoneNodeName = withPrefix(zone.nodeName(), zonePrefix);
+		// Only apply prefix when node was not explicitly specified
+		String sourceNodeName = source.explicit() ? source.nodeName() : withPrefix(source.nodeName(), sourcePrefix);
+		String zoneNodeName = zone.explicit() ? zone.nodeName() : withPrefix(zone.nodeName(), zonePrefix);
 
 		Integer sourceNodeId = graph.nodeIds.get(sourceNodeName);
 		Integer zoneNodeId = graph.nodeIds.get(zoneNodeName);
@@ -115,21 +116,27 @@ public class PipewireAudioInterface implements AudioInterface {
 
 	/**
 	 * Parses a node:port specification. If the input contains a colon,
-	 * the part before is the node name and after is the port name.
-	 * Otherwise, uses the default name as the node.
+	 * the part before is the node name and after is the port name (explicit=true).
+	 * Otherwise, uses the default name as the node (explicit=false).
 	 */
 	NodePort parseNodePort(String spec, String defaultNodeName) {
 		if (spec == null) {
-			return new NodePort(defaultNodeName, null);
+			return new NodePort(defaultNodeName, null, false);
 		}
 		int colonIdx = spec.indexOf(':');
 		if (colonIdx > 0) {
-			return new NodePort(spec.substring(0, colonIdx), spec.substring(colonIdx + 1));
+			return new NodePort(spec.substring(0, colonIdx), spec.substring(colonIdx + 1), true);
 		}
-		return new NodePort(defaultNodeName, spec);
+		return new NodePort(defaultNodeName, spec, false);
 	}
 
-	record NodePort(String nodeName, String portName) {
+	/**
+	 * Represents a parsed node:port specification.
+	 * @param nodeName The PipeWire node name
+	 * @param portName The port name on that node
+	 * @param explicit True if node was explicitly specified via "node:port" format (prefix should not be applied)
+	 */
+	record NodePort(String nodeName, String portName, boolean explicit) {
 	}
 
 	private String withPrefix(String rawName, String prefix) {

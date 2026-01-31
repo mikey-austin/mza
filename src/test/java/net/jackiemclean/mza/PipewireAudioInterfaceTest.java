@@ -84,6 +84,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("defaultNode", result.nodeName());
             assertEquals("monitor_FL", result.portName());
+            assertFalse(result.explicit(), "Simple format should not be explicit");
         }
 
         @Test
@@ -92,6 +93,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("alsa_input.usb-device", result.nodeName());
             assertEquals("capture_AUX0", result.portName());
+            assertTrue(result.explicit(), "node:port format should be explicit");
         }
 
         @Test
@@ -102,6 +104,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("alsa_input.usb-Focusrite_Scarlett_18i20_USB_03000295-00.multichannel-input", result.nodeName());
             assertEquals("capture_AUX0", result.portName());
+            assertTrue(result.explicit(), "node:port format should be explicit");
         }
 
         @Test
@@ -110,6 +113,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("defaultNode", result.nodeName());
             assertNull(result.portName());
+            assertFalse(result.explicit(), "Null input should not be explicit");
         }
 
         @Test
@@ -119,6 +123,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("defaultNode", result.nodeName());
             assertEquals(":portOnly", result.portName());
+            assertFalse(result.explicit(), "Colon at start should not be explicit");
         }
 
         @Test
@@ -128,6 +133,7 @@ class PipewireAudioInterfaceTest {
 
             assertEquals("node", result.nodeName());
             assertEquals("port:extra", result.portName());
+            assertTrue(result.explicit(), "node:port format should be explicit");
         }
     }
 }
