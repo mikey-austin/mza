@@ -142,15 +142,24 @@ public class PipewireAudioInterface implements AudioInterface {
 		boolean desiredExists = false;
 
 		for (LinkInfo link : graph.links) {
+			// Check links going INTO the zone port - remove wrong sources
 			if (link.inNodeId == zoneNodeId && link.inPortId == zonePortId) {
 				if (link.outNodeId == sourceNodeId && link.outPortId == sourcePortId) {
 					desiredExists = true;
 				} else {
 					wrongLinks.add(link.linkId);
-					LOG.debug("Will remove link {} ({}:{} -> {}:{})", link.linkId,
+					LOG.debug("Will remove wrong input link {} ({}:{} -> {}:{})", link.linkId,
 							graph.portNames.get(link.outNodeId + ":" + link.outPortId), link.outNodeId,
 							graph.portNames.get(link.inNodeId + ":" + link.inPortId), link.inNodeId);
 				}
+			}
+			// Check links coming FROM the source port - remove links to wrong destinations
+			else if (link.outNodeId == sourceNodeId && link.outPortId == sourcePortId) {
+				// This source port is connected to something other than our zone port
+				wrongLinks.add(link.linkId);
+				LOG.debug("Will remove wrong output link {} ({}:{} -> {}:{})", link.linkId,
+						graph.portNames.get(link.outNodeId + ":" + link.outPortId), link.outNodeId,
+						graph.portNames.get(link.inNodeId + ":" + link.inPortId), link.inNodeId);
 			}
 		}
 

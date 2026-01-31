@@ -32,6 +32,8 @@ audio.interface:
     source-link-prefix: ""
     zone-link-prefix: input.
     zone-props-prefix: output.
+    # Interval in milliseconds for periodic re-sync of all zones (default: 60000 = 1 minute)
+    periodic-sync-interval-ms: 60000
 
 # MQTT configuration
 # Set mqtt.enabled to false to disable MQTT entirely (useful when using JSON-RPC WebSocket only)

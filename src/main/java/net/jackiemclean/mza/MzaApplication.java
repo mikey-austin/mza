@@ -7,9 +7,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 
 @SpringBootApplication
+@EnableScheduling
 @EntityScan(basePackages = "net.jackiemclean.mza")
 @ConfigurationPropertiesScan("net.jackiemclean.mza")
 public class MzaApplication {
