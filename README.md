@@ -103,34 +103,45 @@ docker run -d \
 - **Runtime Dir**: Sets `AUDIO_INTERFACE_PIPEWIRE_RUNTIME_DIR` to the directory containing the mounted socket (e.g., `/tmp`).
 - **Backend**: Overrides the default backend of the profile with `AUDIO_INTERFACE_BACKEND=PIPEWIRE`.
 
-### Remote PipeWire Debugging with qpwgraph
+### Remote PipeWire Debugging with qpwgraph/helvum
 
-To visualize and debug the PipeWire graph on a remote headless machine using qpwgraph on your local workstation, you can forward the PipeWire socket over SSH.
+To visualize and debug the PipeWire graph on a remote headless machine using qpwgraph or helvum on your local workstation, you can forward the PipeWire socket over SSH.
 
-**1. Forward the remote PipeWire socket to your local machine:**
+**1. Create a directory and forward the remote PipeWire socket:**
 
 ```bash
-# Create a local directory for the forwarded socket
+# Create directory for the forwarded socket
 mkdir -p /tmp/remote-pipewire
 
 # Forward the socket (replace 'user@remote-host' with your server)
+# The socket must be named 'pipewire-0' in the directory
 ssh -L /tmp/remote-pipewire/pipewire-0:/run/user/1000/pipewire-0 user@remote-host
 ```
 
-**2. In another terminal, run qpwgraph with the forwarded socket:**
+**2. In another terminal, run a PipeWire GUI with the forwarded socket:**
 
 ```bash
-PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire qpwgraph
+# All three environment variables are required
+PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire \
+XDG_RUNTIME_DIR=/tmp/remote-pipewire \
+PIPEWIRE_REMOTE=pipewire-0 \
+helvum
+
+# Or with qpwgraph
+PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire \
+XDG_RUNTIME_DIR=/tmp/remote-pipewire \
+PIPEWIRE_REMOTE=pipewire-0 \
+qpwgraph
 ```
 
 You can also run other PipeWire tools against the remote instance:
 
 ```bash
 # List remote nodes
-PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire pw-cli list-objects
+PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire XDG_RUNTIME_DIR=/tmp/remote-pipewire PIPEWIRE_REMOTE=pipewire-0 pw-cli list-objects
 
 # Dump remote graph
-PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire pw-dump
+PIPEWIRE_RUNTIME_DIR=/tmp/remote-pipewire XDG_RUNTIME_DIR=/tmp/remote-pipewire PIPEWIRE_REMOTE=pipewire-0 pw-dump
 ```
 
 **Note:** The SSH session must remain open for the socket forwarding to work. The remote user's UID (1000 in the example) should match the user running PipeWire on the remote machine.
