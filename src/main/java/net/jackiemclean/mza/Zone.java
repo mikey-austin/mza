@@ -47,12 +47,20 @@ public class Zone {
     this.leftOutput = leftOutput;
   }
 
+  public void setLeft(Output left) {
+    this.leftOutput = left;
+  }
+
   public Output getRightOutput() {
     return rightOutput;
   }
 
   public void setRightOutput(Output rightOutput) {
     this.rightOutput = rightOutput;
+  }
+
+  public void setRight(Output right) {
+    this.rightOutput = right;
   }
 
   public String getDescription() {

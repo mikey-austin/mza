@@ -50,11 +50,19 @@ public class Source {
     this.leftInput = leftInput;
   }
 
+  public void setLeft(Input left) {
+    this.leftInput = left;
+  }
+
   public Input getRightInput() {
     return rightInput;
   }
 
   public void setRightInput(Input rightInput) {
     this.rightInput = rightInput;
+  }
+
+  public void setRight(Input right) {
+    this.rightInput = right;
   }
 }
