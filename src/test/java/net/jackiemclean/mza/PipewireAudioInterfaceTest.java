@@ -5,9 +5,8 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -20,8 +19,6 @@ class PipewireAudioInterfaceTest {
     private Zone zone;
     private Source source;
     private ZoneState zoneState;
-
-    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @BeforeEach
     void setUp() throws Exception {
@@ -58,19 +55,24 @@ class PipewireAudioInterfaceTest {
         zoneState.setVolume(50);
         zoneState.setMuted(false);
 
-        String dump = Files.readString(Path.of("pw-dump.txt"));
-        when(commandExecutor.executeAndGetOutput(eq("pw-dump"), anyMap())).thenReturn(List.of(dump.split("\\R")));
+        try (InputStream is = getClass().getResourceAsStream("/pw-dump-test.json")) {
+            String dump = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            when(commandExecutor.executeAndGetOutput(eq("pw-dump"), anyMap())).thenReturn(List.of(dump.split("\\R")));
+        }
     }
 
     @Test
     void syncUnlinksExistingLinksForZone() throws Exception {
         audioInterface.sync(zone, source, zoneState);
 
+        // Volume/mute applied to output node (id 66)
+        verify(commandExecutor).execute(contains("pw-cli set-param 66"), anyMap());
+
         // New links created
         verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FL' 'input.zone6_laundry_room:playback_FL'"), anyMap());
         verify(commandExecutor).execute(contains("pw-link 'upnp2:monitor_FR' 'input.zone6_laundry_room:playback_FR'"), anyMap());
 
-        // Existing links from mpd (node 39) to zone6 (node 67) removed by id
+        // Existing links from mpd (node 39) to zone6 input (node 67) removed by id
         verify(commandExecutor).execute(contains("pw-link -d 237"), anyMap());
         verify(commandExecutor).execute(contains("pw-link -d 211"), anyMap());
     }

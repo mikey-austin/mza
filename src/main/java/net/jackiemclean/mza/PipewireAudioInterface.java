@@ -194,14 +194,8 @@ public class PipewireAudioInterface implements AudioInterface {
 							graph.portNames.get(link.inNodeId + ":" + link.inPortId), link.inNodeId);
 				}
 			}
-			// Check links coming FROM the source port - remove links to wrong destinations
-			else if (link.outNodeId == sourceNodeId && link.outPortId == sourcePortId) {
-				// This source port is connected to something other than our zone port
-				wrongLinks.add(link.linkId);
-				LOG.debug("Will remove wrong output link {} ({}:{} -> {}:{})", link.linkId,
-						graph.portNames.get(link.outNodeId + ":" + link.outPortId), link.outNodeId,
-						graph.portNames.get(link.inNodeId + ":" + link.inPortId), link.inNodeId);
-			}
+			// Note: We intentionally do NOT remove links FROM the source to other destinations,
+			// as the same source can legitimately be connected to multiple zones.
 		}
 
 		// Remove stale links FIRST (reconcile by cleaning up before creating)

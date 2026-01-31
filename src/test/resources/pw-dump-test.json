@@ -1,0 +1,142 @@
+[
+  {
+    "id": 39,
+    "type": "PipeWire:Interface:Node",
+    "version": 3,
+    "info": {
+      "props": {
+        "node.name": "mpd"
+      }
+    }
+  },
+  {
+    "id": 42,
+    "type": "PipeWire:Interface:Node",
+    "version": 3,
+    "info": {
+      "props": {
+        "node.name": "upnp2"
+      }
+    }
+  },
+  {
+    "id": 66,
+    "type": "PipeWire:Interface:Node",
+    "version": 3,
+    "info": {
+      "props": {
+        "node.name": "output.zone6_laundry_room"
+      }
+    }
+  },
+  {
+    "id": 67,
+    "type": "PipeWire:Interface:Node",
+    "version": 3,
+    "info": {
+      "props": {
+        "node.name": "input.zone6_laundry_room"
+      }
+    }
+  },
+  {
+    "id": 100,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "out",
+      "props": {
+        "node.id": 39,
+        "port.name": "monitor_FL",
+        "port.direction": "out"
+      }
+    }
+  },
+  {
+    "id": 101,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "out",
+      "props": {
+        "node.id": 39,
+        "port.name": "monitor_FR",
+        "port.direction": "out"
+      }
+    }
+  },
+  {
+    "id": 110,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "out",
+      "props": {
+        "node.id": 42,
+        "port.name": "monitor_FL",
+        "port.direction": "out"
+      }
+    }
+  },
+  {
+    "id": 111,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "out",
+      "props": {
+        "node.id": 42,
+        "port.name": "monitor_FR",
+        "port.direction": "out"
+      }
+    }
+  },
+  {
+    "id": 150,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "in",
+      "props": {
+        "node.id": 67,
+        "port.name": "playback_FL",
+        "port.direction": "in"
+      }
+    }
+  },
+  {
+    "id": 151,
+    "type": "PipeWire:Interface:Port",
+    "version": 3,
+    "info": {
+      "direction": "in",
+      "props": {
+        "node.id": 67,
+        "port.name": "playback_FR",
+        "port.direction": "in"
+      }
+    }
+  },
+  {
+    "id": 237,
+    "type": "PipeWire:Interface:Link",
+    "version": 3,
+    "info": {
+      "output-node-id": 39,
+      "output-port-id": 100,
+      "input-node-id": 67,
+      "input-port-id": 150
+    }
+  },
+  {
+    "id": 211,
+    "type": "PipeWire:Interface:Link",
+    "version": 3,
+    "info": {
+      "output-node-id": 39,
+      "output-port-id": 101,
+      "input-node-id": 67,
+      "input-port-id": 151
+    }
+  }
+]
