@@ -40,85 +40,85 @@ mqtt.topic.base.group: mza/group/
 zones:
   - name: living_room
     description: Living room speakers
-    leftOutput:
+    left:
       name: "Mix A"
-    rightOutput:
+    right:
       name: "Mix B"
   - name: kitchen
     description: Kitchen speakers
-    leftOutput:
+    left:
       name: "Mix C"
-    rightOutput:
+    right:
       name: "Mix D"
   - name: ground_floor_toilet
     description: Ground floor toilet speaker
-    leftOutput:
+    left:
       name: "Mix E"
-    rightOutput:
+    right:
       name: "Mix E"
   - name: main_bathroom
     description: Main bathroom speaker
-    leftOutput:
+    left:
       name: "Mix F"
-    rightOutput:
+    right:
       name: "Mix F"
   - name: first_floor_toilet
     description: First floor toilet speaker
-    leftOutput:
+    left:
       name: "Mix G"
-    rightOutput:
+    right:
       name: "Mix G"
   - name: laundry_room
     description: Laundry room speaker
-    leftOutput:
+    left:
       name: "Mix H"
-    rightOutput:
+    right:
       name: "Mix H"
 
 sources:
   # PCM sources are software mixer inputs that applications
   # such as MPD, etc. use to output their sound.
   - name: "mpd"
-    leftInput:
+    left:
       name: "Input 01"
-    rightInput:
+    right:
       name: "Input 02"
   - name: "upnp1"
-    leftInput:
+    left:
       name: "Input 03"
-    rightInput:
+    right:
       name: "Input 04"
   - name: "upnp2"
-    leftInput:
+    left:
       name: "Input 05"
-    rightInput:
+    right:
       name: "Input 06"
   - name: "upnp3"
-    leftInput:
+    left:
       name: "Input 07"
-    rightInput:
+    right:
       name: "Input 08"
   - name: "upnp4"
-    leftInput:
+    left:
       name: "Input 09"
-    rightInput:
+    right:
       name: "Input 10"
 
   # Hardware input sources. This allows us to directly route
   # physical audio sources connected to the inputs to one or
   # more zones.
   - name: "hw_source1"
-    leftInput:
+    left:
       name: "Input 13"
-    rightInput:
+    right:
       name: "Input 14"
   - name: "hw_source2"
-    leftInput:
+    left:
       name: "Input 15"
-    rightInput:
+    right:
       name: "Input 16"
   - name: "hw_source3"
-    leftInput:
+    left:
       name: "Input 17"
-    rightInput:
+    right:
       name: "Input 18"

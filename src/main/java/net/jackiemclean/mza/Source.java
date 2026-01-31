@@ -1,5 +1,7 @@
 package net.jackiemclean.mza;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 /**
@@ -14,12 +16,16 @@ public class Source {
   @Id
   private String name;
 
+  @JsonProperty("left")
+  @JsonAlias("leftInput")
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "left_input_name")),
   })
   @Embedded
   private Input leftInput;
 
+  @JsonProperty("right")
+  @JsonAlias("rightInput")
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "right_input_name")),
   })

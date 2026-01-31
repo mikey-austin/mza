@@ -43,64 +43,64 @@ mqtt.enabled: false
 zones:
   - name: zone1_living_room
     description: Living room speakers
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
   - name: zone2_kitchen
     description: Kitchen speakers
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
   - name: zone3_ground_floor_toilet
     description: Ground floor toilet speaker
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
   - name: zone4_main_bathroom
     description: Main bathroom speaker
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
   - name: zone5_first_floor_toilet
     description: First floor toilet speaker
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
   - name: zone6_laundry_room
     description: Laundry room speaker
-    leftOutput:
+    left:
       name: "playback_FL"
-    rightOutput:
+    right:
       name: "playback_FR"
 
 sources:
   - name: "mpd"
-    leftInput:
+    left:
       name: "monitor_FL"
-    rightInput:
+    right:
       name: "monitor_FR"
   - name: "gstreamer1"
-    leftInput:
+    left:
       name: "monitor_FL"
-    rightInput:
+    right:
       name: "monitor_FR"
   - name: "gstreamer2"
-    leftInput:
+    left:
       name: "monitor_FL"
-    rightInput:
+    right:
       name: "monitor_FR"
   - name: "upnp1"
-    leftInput:
+    left:
       name: "monitor_FL"
-    rightInput:
+    right:
       name: "monitor_FR"
   - name: "upnp2"
-    leftInput:
+    left:
       name: "monitor_FL"
-    rightInput:
+    right:
       name: "monitor_FR"

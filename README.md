@@ -104,6 +104,35 @@ docker run -d \
 - **Backend**: Overrides the default backend of the profile with `AUDIO_INTERFACE_BACKEND=PIPEWIRE`.
 
 
+### Configuring Zones and Sources
+
+Zones and sources are configured in your application YAML file. Each zone represents an audio output destination (e.g., a room with speakers), and each source represents an audio input (e.g., a media player).
+
+**Zone configuration:**
+```yaml
+zones:
+  - name: living_room
+    description: Living room speakers
+    left:
+      name: "playback_FL"    # Left channel port/mixer name
+    right:
+      name: "playback_FR"    # Right channel port/mixer name
+```
+
+**Source configuration:**
+```yaml
+sources:
+  - name: "mpd"
+    left:
+      name: "monitor_FL"     # Left channel port/mixer name
+    right:
+      name: "monitor_FR"     # Right channel port/mixer name
+```
+
+The `left` and `right` properties define the audio channel mapping. For mono zones/sources, use the same port name for both channels.
+
+For backwards compatibility, `leftOutput`/`rightOutput` (zones) and `leftInput`/`rightInput` (sources) are also accepted.
+
 ### Environment Variables
 
 | Variable | Description | Default |

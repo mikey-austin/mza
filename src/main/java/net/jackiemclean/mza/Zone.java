@@ -1,5 +1,7 @@
 package net.jackiemclean.mza;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
@@ -9,12 +11,16 @@ public class Zone {
   @Id
   private String name;
 
+  @JsonProperty("left")
+  @JsonAlias("leftOutput")
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "left_output_name")),
   })
   @Embedded
   private Output leftOutput;
 
+  @JsonProperty("right")
+  @JsonAlias("rightOutput")
   @AttributeOverrides({
     @AttributeOverride(name = "name", column = @Column(name = "right_output_name")),
   })
