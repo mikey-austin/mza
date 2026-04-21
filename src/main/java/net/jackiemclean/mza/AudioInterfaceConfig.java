@@ -1,5 +1,7 @@
 package net.jackiemclean.mza;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,27 +52,50 @@ public class AudioInterfaceConfig {
   @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "PIPEWIRE")
   public AudioInterface pipewire(
       @Value("${audio.interface.pipewire.runtime-dir:#{null}}") String pipewireRuntimeDir,
-      @Value("${audio.interface.pipewire.pw-dump-command:/usr/bin/pw-dump}") String pwDumpCommand,
       @Value("${audio.interface.pipewire.pw-link-command:/usr/bin/pw-link}") String pwLinkCommand,
       @Value("${audio.interface.pipewire.pw-cli-command:/usr/bin/pw-cli}") String pwCliCommand,
       @Value("${audio.interface.pipewire.source-link-prefix:}") String sourceLinkPrefix,
       @Value("${audio.interface.pipewire.zone-link-prefix:input.}") String zoneLinkPrefix,
       @Value("${audio.interface.pipewire.zone-props-prefix:output.}") String zonePropsPrefix,
-      CommandExecutor commandExecutor) {
+      CommandExecutor commandExecutor,
+      PipewireGraphSource graphSource) {
     return wrapWithDebounce(new PipewireAudioInterface(
         pipewireRuntimeDir,
-        pwDumpCommand,
         pwLinkCommand,
         pwCliCommand,
         sourceLinkPrefix,
         zoneLinkPrefix,
         zonePropsPrefix,
-        commandExecutor));
+        commandExecutor,
+        graphSource));
   }
 
   @Bean
   @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "PIPEWIRE")
   public CommandExecutor commandExecutor() {
     return new ShellCommandExecutor();
+  }
+
+  @Bean
+  @ConditionalOnProperty(name = "audio.interface.backend", havingValue = "PIPEWIRE")
+  public PipewireGraphMonitor pipewireGraphMonitor(
+      @Value("${audio.interface.pipewire.runtime-dir:#{null}}") String pipewireRuntimeDir,
+      @Value("${audio.interface.pipewire.pw-dump-command:/usr/bin/pw-dump}") String pwDumpCommand) {
+    Map<String, String> env = new HashMap<>();
+    if (pipewireRuntimeDir != null && !pipewireRuntimeDir.isBlank()) {
+      env.put("PIPEWIRE_RUNTIME_DIR", pipewireRuntimeDir);
+      env.put("XDG_RUNTIME_DIR", pipewireRuntimeDir);
+    } else {
+      String xdg = System.getenv("XDG_RUNTIME_DIR");
+      if (xdg != null) {
+        env.put("PIPEWIRE_RUNTIME_DIR", xdg);
+        env.put("XDG_RUNTIME_DIR", xdg);
+      }
+    }
+    String remote = System.getenv("PIPEWIRE_REMOTE");
+    if (remote != null) {
+      env.put("PIPEWIRE_REMOTE", remote);
+    }
+    return new PipewireGraphMonitor(pwDumpCommand, env);
   }
 }

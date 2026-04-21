@@ -6,23 +6,23 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * PipeWire backend that mirrors the simple channel mapping of the ALSA/amixer
  * backend: left-to-left, right-to-right. It controls volume/mute on the zone
- * node using pw-cli set-param and connects ports using pw-link.
+ * node using pw-cli set-param and connects ports using pw-link. Graph state
+ * is read from a {@link PipewireGraphSource} (typically a background
+ * `pw-dump --monitor` maintained by {@link PipewireGraphMonitor}) so that
+ * sync() does not spawn a fresh pw-dump process per call.
  */
 public class PipewireAudioInterface implements AudioInterface {
 
 	private static final Logger LOG = LoggerFactory.getLogger(PipewireAudioInterface.class);
 
-	private static final ObjectMapper MAPPER = new ObjectMapper();
 	private final CommandExecutor commandExecutor;
+	private final PipewireGraphSource graphSource;
 	private final Map<String, String> stringEnv;
 
-	private final String pwDumpCommand;
 	private final String pwLinkCommand;
 	private final String pwCliCommand;
 	private final String sourceLinkPrefix;
@@ -31,15 +31,15 @@ public class PipewireAudioInterface implements AudioInterface {
 
 	public PipewireAudioInterface(
 			String pipewireRuntimeDir,
-			String pwDumpCommand,
 			String pwLinkCommand,
 			String pwCliCommand,
 			String sourceLinkPrefix,
 			String zoneLinkPrefix,
 			String zonePropsPrefix,
-			CommandExecutor commandExecutor) {
+			CommandExecutor commandExecutor,
+			PipewireGraphSource graphSource) {
 		this.commandExecutor = commandExecutor;
-		this.pwDumpCommand = pwDumpCommand;
+		this.graphSource = graphSource;
 		this.pwLinkCommand = pwLinkCommand;
 		this.pwCliCommand = pwCliCommand;
 		this.sourceLinkPrefix = sourceLinkPrefix == null ? "" : sourceLinkPrefix;
@@ -63,12 +63,11 @@ public class PipewireAudioInterface implements AudioInterface {
 	public void sync(Zone zone, Source source, ZoneState zoneState) {
 		LOG.debug("Syncing zone {} (Source: {}, State: {})", zone.getName(), source.getName(), zoneState);
 
-		// Parse dump once and extract all data in a single pass
-		GraphState graph = loadAndParseGraph();
+		GraphState graph = graphSource.getSnapshot();
 
 		// Resolve zone properties node for volume/mute control
 		String zonePropsNodeName = withPrefix(zone.getName(), zonePropsPrefix);
-		Integer zonePropsNodeId = graph.nodeIds.get(zonePropsNodeName);
+		Integer zonePropsNodeId = graph.nodeIds().get(zonePropsNodeName);
 		if (zonePropsNodeId == null) {
 			LOG.error("Zone properties node '{}' not found in PipeWire graph, skipping volume/mute", zonePropsNodeName);
 		} else {
@@ -99,8 +98,8 @@ public class PipewireAudioInterface implements AudioInterface {
 		String sourceNodeName = source.explicit() ? source.nodeName() : withPrefix(source.nodeName(), sourcePrefix);
 		String zoneNodeName = zone.explicit() ? zone.nodeName() : withPrefix(zone.nodeName(), zonePrefix);
 
-		Integer sourceNodeId = graph.nodeIds.get(sourceNodeName);
-		Integer zoneNodeId = graph.nodeIds.get(zoneNodeName);
+		Integer sourceNodeId = graph.nodeIds().get(sourceNodeName);
+		Integer zoneNodeId = graph.nodeIds().get(zoneNodeName);
 
 		if (sourceNodeId == null) {
 			LOG.error("Source node '{}' not found in PipeWire graph, skipping channel", sourceNodeName);
@@ -167,8 +166,8 @@ public class PipewireAudioInterface implements AudioInterface {
 			return;
 		}
 
-		Integer zonePortId = graph.inPorts.get(zoneNodeId + ":" + zonePort);
-		Integer sourcePortId = graph.outPorts.get(sourceNodeId + ":" + sourcePort);
+		Integer zonePortId = graph.inPorts().get(zoneNodeId + ":" + zonePort);
+		Integer sourcePortId = graph.outPorts().get(sourceNodeId + ":" + sourcePort);
 
 		if (sourcePortId == null) {
 			LOG.warn("Missing source port id for node {}:{}, skipping link", sourceNodeId, sourcePort);
@@ -182,16 +181,16 @@ public class PipewireAudioInterface implements AudioInterface {
 		List<Integer> wrongLinks = new ArrayList<>();
 		boolean desiredExists = false;
 
-		for (LinkInfo link : graph.links) {
+		for (LinkInfo link : graph.links()) {
 			// Check links going INTO the zone port - remove wrong sources
-			if (link.inNodeId == zoneNodeId && link.inPortId == zonePortId) {
-				if (link.outNodeId == sourceNodeId && link.outPortId == sourcePortId) {
+			if (link.inNodeId() == zoneNodeId && link.inPortId() == zonePortId) {
+				if (link.outNodeId() == sourceNodeId && link.outPortId() == sourcePortId) {
 					desiredExists = true;
 				} else {
-					wrongLinks.add(link.linkId);
-					LOG.debug("Will remove wrong input link {} ({}:{} -> {}:{})", link.linkId,
-							graph.portNames.get(link.outNodeId + ":" + link.outPortId), link.outNodeId,
-							graph.portNames.get(link.inNodeId + ":" + link.inPortId), link.inNodeId);
+					wrongLinks.add(link.linkId());
+					LOG.debug("Will remove wrong input link {} ({}:{} -> {}:{})", link.linkId(),
+							graph.portNames().get(link.outNodeId() + ":" + link.outPortId()), link.outNodeId(),
+							graph.portNames().get(link.inNodeId() + ":" + link.inPortId()), link.inNodeId());
 				}
 			}
 			// Note: We intentionally do NOT remove links FROM the source to other destinations,
@@ -203,8 +202,8 @@ public class PipewireAudioInterface implements AudioInterface {
 
 		// Create link if missing
 		if (!desiredExists) {
-			String fullSource = withPrefix(graph.nodeNames.get(sourceNodeId), sourceLinkPrefix) + ":" + sourcePort;
-			String fullZone = withPrefix(graph.nodeNames.get(zoneNodeId), zoneLinkPrefix) + ":" + zonePort;
+			String fullSource = withPrefix(graph.nodeNames().get(sourceNodeId), sourceLinkPrefix) + ":" + sourcePort;
+			String fullZone = withPrefix(graph.nodeNames().get(zoneNodeId), zoneLinkPrefix) + ":" + zonePort;
 			String cmd = String.format("%s '%s' '%s' 2>/dev/null || true", pwLinkCommand, fullSource, fullZone);
 			try {
 				commandExecutor.execute(cmd, stringEnv);
@@ -223,110 +222,5 @@ public class PipewireAudioInterface implements AudioInterface {
 				LOG.warn("Failed to unlink link {} for zone {}", linkId, zoneName, e);
 			}
 		}
-	}
-
-	/**
-	 * Parse the PipeWire graph dump in a single pass, extracting all needed data.
-	 */
-	private GraphState loadAndParseGraph() {
-		JsonNode dump = loadDump();
-
-		Map<String, Integer> nodeIds = new HashMap<>();      // node.name -> object.id
-		Map<Integer, String> nodeNames = new HashMap<>();    // object.id -> node.name
-		Map<String, Integer> inPorts = new HashMap<>();      // nodeId:portName -> object.id
-		Map<String, Integer> outPorts = new HashMap<>();     // nodeId:portName -> object.id
-		Map<String, String> portNames = new HashMap<>();     // nodeId:portObjectId -> portName
-		List<LinkInfo> links = new ArrayList<>();
-
-		for (JsonNode entry : dump) {
-			if (!entry.has("type")) {
-				continue;
-			}
-
-			String type = entry.get("type").asText();
-			int objectId = entry.path("id").asInt(-1);
-			if (objectId == -1) {
-				continue;
-			}
-
-			JsonNode info = entry.get("info");
-			if (info == null) {
-				continue;
-			}
-
-			switch (type) {
-				case "PipeWire:Interface:Node" -> {
-					JsonNode props = info.get("props");
-					if (props != null) {
-						String nodeName = props.path("node.name").asText(null);
-						if (nodeName != null) {
-							nodeIds.put(nodeName, objectId);
-							nodeNames.put(objectId, nodeName);
-						}
-					}
-				}
-				case "PipeWire:Interface:Port" -> {
-					JsonNode props = info.get("props");
-					if (props != null) {
-						int nodeId = props.path("node.id").asInt(-1);
-						String portName = props.path("port.name").asText(null);
-						String direction = props.path("port.direction").asText();
-						if (direction.isEmpty()) {
-							direction = info.path("direction").asText();
-						}
-
-						if (nodeId != -1 && portName != null) {
-							String key = nodeId + ":" + portName;
-							if ("in".equals(direction)) {
-								inPorts.put(key, objectId);
-							} else if ("out".equals(direction)) {
-								outPorts.put(key, objectId);
-							}
-							portNames.put(nodeId + ":" + objectId, portName);
-						}
-					}
-				}
-				case "PipeWire:Interface:Link" -> {
-					int inNode = info.path("input-node-id").asInt(-1);
-					int inPort = info.path("input-port-id").asInt(-1);
-					int outNode = info.path("output-node-id").asInt(-1);
-					int outPort = info.path("output-port-id").asInt(-1);
-
-					if (inNode != -1 && inPort != -1 && outNode != -1 && outPort != -1) {
-						links.add(new LinkInfo(objectId, inNode, inPort, outNode, outPort));
-					}
-				}
-			}
-		}
-
-		return new GraphState(nodeIds, nodeNames, inPorts, outPorts, portNames, links);
-	}
-
-	private JsonNode loadDump() {
-		try {
-			List<String> lines = commandExecutor.executeAndGetOutput(pwDumpCommand, stringEnv);
-			String json = String.join("\n", lines);
-			return MAPPER.readTree(json);
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to load/parse pw-dump output", e);
-		}
-	}
-
-	/**
-	 * Holds all parsed graph state from a single pw-dump pass.
-	 */
-	private record GraphState(
-			Map<String, Integer> nodeIds,
-			Map<Integer, String> nodeNames,
-			Map<String, Integer> inPorts,
-			Map<String, Integer> outPorts,
-			Map<String, String> portNames,
-			List<LinkInfo> links) {
-	}
-
-	/**
-	 * Represents a link between two ports.
-	 */
-	private record LinkInfo(int linkId, int inNodeId, int inPortId, int outNodeId, int outPortId) {
 	}
 }

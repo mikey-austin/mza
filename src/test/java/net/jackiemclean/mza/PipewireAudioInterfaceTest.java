@@ -5,9 +5,10 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -23,15 +24,24 @@ class PipewireAudioInterfaceTest {
     @BeforeEach
     void setUp() throws Exception {
         commandExecutor = mock(CommandExecutor.class);
+
+        GraphState graph;
+        try (InputStream is = getClass().getResourceAsStream("/pw-dump-test.json")) {
+            String dump = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+            JsonNode array = new ObjectMapper().readTree(dump);
+            graph = PipewireGraphParser.parse(array);
+        }
+        PipewireGraphSource graphSource = () -> graph;
+
         audioInterface = new PipewireAudioInterface(
                 "/run/user/1000",
-                "pw-dump",
                 "pw-link",
                 "pw-cli",
                 "",        // source link prefix
                 "input.",  // zone link prefix
                 "output.", // zone props prefix
-                commandExecutor);
+                commandExecutor,
+                graphSource);
 
         zone = new Zone();
         zone.setName("zone6_laundry_room");
@@ -54,15 +64,10 @@ class PipewireAudioInterfaceTest {
         zoneState = new ZoneState();
         zoneState.setVolume(50);
         zoneState.setMuted(false);
-
-        try (InputStream is = getClass().getResourceAsStream("/pw-dump-test.json")) {
-            String dump = new String(is.readAllBytes(), StandardCharsets.UTF_8);
-            when(commandExecutor.executeAndGetOutput(eq("pw-dump"), anyMap())).thenReturn(List.of(dump.split("\\R")));
-        }
     }
 
     @Test
-    void syncUnlinksExistingLinksForZone() throws Exception {
+    void syncUnlinksExistingLinksForZone() {
         audioInterface.sync(zone, source, zoneState);
 
         // Volume/mute applied to output node (id 66)
@@ -75,6 +80,14 @@ class PipewireAudioInterfaceTest {
         // Existing links from mpd (node 39) to zone6 input (node 67) removed by id
         verify(commandExecutor).execute(contains("pw-link -d 237"), anyMap());
         verify(commandExecutor).execute(contains("pw-link -d 211"), anyMap());
+    }
+
+    @Test
+    void syncReadsFreshGraphSnapshotEveryCall() {
+        // Ensure we do not call pw-dump via commandExecutor anymore; the graph
+        // source supplies it in-memory.
+        audioInterface.sync(zone, source, zoneState);
+        verify(commandExecutor, never()).executeAndGetOutput(contains("pw-dump"), anyMap());
     }
 
     @Nested
